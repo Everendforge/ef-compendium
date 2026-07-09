@@ -1,0 +1,8 @@
+{
+  "storageVersion": "0.2",
+  "sequence": {
+    "id": "sequence:one",
+    "name": "Aster's Route",
+    "eventIds": ["event:arrival"]
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "name": "@everendforge/compendium",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "description": "Static, publishable universe compendium for Everend Forge.",
+  "license": "MIT OR Apache-2.0",
+  "bin": {
+    "everend-compendium": "./bin/everend-compendium.mjs"
+  },
+  "scripts": {
+    "build": "tsx src/cli.ts build",
+    "dev": "tsx src/cli.ts dev",
+    "init": "tsx src/cli.ts init",
+    "export:markdown": "tsx src/cli.ts markdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint src tests",
+    "format:check": "prettier --check .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "astro": "^5.15.0",
+    "marked": "^15.0.12",
+    "sanitize-html": "^2.17.0",
+    "yaml": "^2.8.1"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/sanitize-html": "^2.16.0",
+    "@typescript-eslint/eslint-plugin": "^8.37.0",
+    "@typescript-eslint/parser": "^8.37.0",
+    "eslint": "^9.34.0",
+    "prettier": "^3.6.2",
+    "tsx": "^4.20.5",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.37.0",
+    "vitest": "^3.2.4"
+  }
+}

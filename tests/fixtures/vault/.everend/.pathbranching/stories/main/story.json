@@ -1,0 +1,6 @@
+{
+  "storageVersion": "0.2",
+  "storyId": "main",
+  "name": "Opening",
+  "sequenceIds": ["sequence:one"]
+}

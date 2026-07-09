@@ -1,0 +1,12 @@
+{
+  "name": "Legacy tale",
+  "events": [
+    {
+      "id": "event:legacy",
+      "name": "Legacy scene",
+      "text": { "format": "plain", "content": "A recovered scene." },
+      "canonRefs": ["character:aster"],
+      "conditions": [{ "type": "private" }]
+    }
+  ]
+}

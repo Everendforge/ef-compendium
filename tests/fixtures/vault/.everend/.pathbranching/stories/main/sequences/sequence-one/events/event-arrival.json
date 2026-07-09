@@ -1,0 +1,15 @@
+{
+  "storageVersion": "0.2",
+  "event": {
+    "id": "event:arrival",
+    "name": "Arrival at Northwatch",
+    "description": "Aster reaches the tower.",
+    "text": {
+      "format": "plain",
+      "content": "[[Aster]] sees the lights of [[Northwatch]]."
+    },
+    "canonRefs": ["character:aster", "location:northwatch"],
+    "decisions": [{ "name": "SECRET DECISION" }],
+    "variables": { "hidden": true }
+  }
+}

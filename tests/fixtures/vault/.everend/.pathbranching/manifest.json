@@ -1,0 +1,16 @@
+{
+  "version": "0.2",
+  "activeStoryId": "main",
+  "stories": [
+    {
+      "id": "main",
+      "name": "Opening",
+      "path": ".everend/.pathbranching/stories/main/story.json"
+    },
+    {
+      "id": "legacy",
+      "name": "Legacy tale",
+      "path": ".everend/.pathbranching/stories/legacy.pathbranching.json"
+    }
+  ]
+}
