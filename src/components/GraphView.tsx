@@ -32,8 +32,7 @@ function cssVar(name: string, fallback: string) {
   return value || fallback;
 }
 
-function typeColor(type: string, accent: string) {
-  const palette = [accent, "#7cc7a2", "#7aa6da", "#c98ad6", "#d6a95c", "#d67e7e"];
+function typeColor(type: string, palette: string[]) {
   let hash = 0;
   for (const char of type) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
   return palette[hash % palette.length];
@@ -105,6 +104,13 @@ export function GraphView({
     let moved = false;
 
     const accent = cssVar("--cp-accent", "#C89B3C");
+    const graphPalette = [
+      accent,
+      cssVar("--cp-link", accent),
+      cssVar("--cp-warning", accent),
+      cssVar("--cp-danger", accent),
+      cssVar("--cp-muted", accent),
+    ];
     const textColor = cssVar("--cp-text", "#f7f2e8");
     const mutedColor = cssVar("--cp-muted", "#8fa4b3");
     const surface = cssVar("--cp-bg", "#03121d");
@@ -152,7 +158,7 @@ export function GraphView({
         if (node.x === undefined || node.y === undefined) continue;
         context.beginPath();
         context.arc(node.x, node.y, radius(node), 0, Math.PI * 2);
-        context.fillStyle = typeColor(node.type, accent);
+        context.fillStyle = typeColor(node.type, graphPalette);
         context.globalAlpha = hovered && hovered !== node ? 0.55 : 1;
         context.fill();
         context.globalAlpha = 1;

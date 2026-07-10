@@ -1,15 +1,18 @@
 import { normalizeThemeId, type ThemeId } from "./themes.js";
+import { normalizePrimaryFont, type PrimaryFontId } from "./typography.js";
 
 export const SETTINGS_KEY = "compendium.settings.v1";
 
 export type CompendiumSettings = {
   theme: ThemeId;
+  primaryFont: PrimaryFontId;
   recentUniverse?: string;
   recentUniverses: string[];
 };
 
 const defaultSettings: CompendiumSettings = {
-  theme: "compendium-dark",
+  theme: "worldnotion-dark",
+  primaryFont: "serif",
   recentUniverses: [],
 };
 
@@ -20,6 +23,7 @@ export function loadSettings(): CompendiumSettings {
     const parsed = JSON.parse(stored) as Partial<CompendiumSettings>;
     return {
       theme: normalizeThemeId(parsed.theme),
+      primaryFont: normalizePrimaryFont(parsed.primaryFont),
       recentUniverse:
         typeof parsed.recentUniverse === "string"
           ? parsed.recentUniverse

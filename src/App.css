@@ -3,6 +3,8 @@
 
 :root {
   --cp-accent: #c89b3c;
+  --cp-warning: #a2543f;
+  --cp-danger: #a2543f;
 }
 
 :root[data-theme="compendium-dark"] {
@@ -18,6 +20,8 @@
   --cp-reading-bg: #071e2f;
   --cp-reading-text: #e8e0d0;
   --cp-link: #e3c988;
+  --cp-warning: #e5c56f;
+  --cp-danger: #ff9f9f;
 }
 
 :root[data-theme="compendium-light"] {
@@ -33,6 +37,72 @@
   --cp-reading-bg: #f7f2e8;
   --cp-reading-text: #23303c;
   --cp-link: #8f6b1e;
+  --cp-warning: #8a6a16;
+  --cp-danger: #a74343;
+}
+
+/* Standalone Compendium uses the same style families as WorldNotion. */
+:root[data-theme="worldnotion-light"],
+:root[data-theme="github"],
+:root[data-theme="one-light-pro"],
+:root[data-theme="dracula-light"],
+:root[data-theme="light-owl"],
+:root[data-theme="material-lighter"] {
+  --wn-bg: #f6f7f5; --wn-panel: #fff; --wn-panel-2: #f1f3f0; --wn-card: #fff;
+  --wn-border: #dcded9; --wn-text: #202522; --wn-muted: #737b75;
+  --wn-accent: #3f7f64; --wn-editor-bg: #fff; --wn-editor-text: #191f1b;
+}
+
+:root[data-theme="worldnotion-dark"],
+:root[data-theme="github-dark"],
+:root[data-theme="one-dark-pro"],
+:root[data-theme="dracula"],
+:root[data-theme="night-owl"],
+:root[data-theme="material-palenight"] {
+  --wn-bg: #181a19; --wn-panel: #202321; --wn-panel-2: #282c29; --wn-card: #202321;
+  --wn-border: #3a403c; --wn-text: #e7ece8; --wn-muted: #9ca59f;
+  --wn-accent: #7cc7a2; --wn-editor-bg: #141615; --wn-editor-text: #e7ece8;
+}
+
+:root[data-theme="github"] { --wn-bg: #f6f8fa; --wn-panel-2: #eef2f6; --wn-border: #d0d7de; --wn-text: #1f2328; --wn-muted: #656d76; --wn-accent: #0969da; }
+:root[data-theme="github-dark"] { --wn-bg: #0d1117; --wn-panel: #161b22; --wn-panel-2: #21262d; --wn-card: #161b22; --wn-border: #30363d; --wn-text: #e6edf3; --wn-muted: #8b949e; --wn-accent: #58a6ff; --wn-editor-bg: #0d1117; --wn-editor-text: #e6edf3; }
+:root[data-theme="one-light-pro"] { --wn-bg: #fafafa; --wn-panel-2: #eef0f3; --wn-border: #d7dae0; --wn-text: #383a42; --wn-muted: #696c77; --wn-accent: #4078f2; }
+:root[data-theme="one-dark-pro"] { --wn-bg: #21252b; --wn-panel: #282c34; --wn-panel-2: #2f333d; --wn-card: #282c34; --wn-border: #3e4451; --wn-text: #abb2bf; --wn-muted: #7f848e; --wn-accent: #61afef; --wn-editor-bg: #1f2329; --wn-editor-text: #abb2bf; }
+:root[data-theme="dracula-light"] { --wn-bg: #f7f4fb; --wn-panel-2: #eee8f8; --wn-border: #d9cdec; --wn-text: #2d2438; --wn-muted: #776889; --wn-accent: #7c4dff; --wn-editor-bg: #fffaff; --wn-editor-text: #2d2438; }
+:root[data-theme="dracula"] { --wn-bg: #282a36; --wn-panel: #343746; --wn-panel-2: #44475a; --wn-card: #343746; --wn-border: #52566d; --wn-text: #f8f8f2; --wn-muted: #a6accd; --wn-accent: #bd93f9; --wn-editor-bg: #242631; --wn-editor-text: #f8f8f2; }
+:root[data-theme="light-owl"] { --wn-bg: #f0f8ff; --wn-panel-2: #dfeef8; --wn-border: #c7d9e6; --wn-text: #243b53; --wn-muted: #627d98; --wn-accent: #2f80ed; --wn-editor-bg: #fbfdff; --wn-editor-text: #243b53; }
+:root[data-theme="night-owl"] { --wn-bg: #011627; --wn-panel: #0b253a; --wn-panel-2: #12324a; --wn-card: #0b253a; --wn-border: #21445f; --wn-text: #d6deeb; --wn-muted: #7f9bb3; --wn-accent: #82aaff; --wn-editor-bg: #011221; --wn-editor-text: #d6deeb; }
+:root[data-theme="material-lighter"] { --wn-bg: #f5f7ff; --wn-panel-2: #e8ebf7; --wn-border: #d1d6e8; --wn-text: #303348; --wn-muted: #676e95; --wn-accent: #7e57c2; }
+:root[data-theme="material-palenight"] { --wn-bg: #292d3e; --wn-panel: #303348; --wn-panel-2: #3a3f58; --wn-card: #303348; --wn-border: #4a506b; --wn-text: #a6accd; --wn-muted: #8790b2; --wn-accent: #c792ea; --wn-editor-bg: #25293a; --wn-editor-text: #a6accd; }
+
+/* In the Suite, Compendium follows the selected WorldNotion style. */
+:root[data-theme="worldnotion-light"],
+:root[data-theme="worldnotion-dark"],
+:root[data-theme="github"],
+:root[data-theme="github-dark"],
+:root[data-theme="one-light-pro"],
+:root[data-theme="one-dark-pro"],
+:root[data-theme="dracula-light"],
+:root[data-theme="dracula"],
+:root[data-theme="light-owl"],
+:root[data-theme="night-owl"],
+:root[data-theme="material-lighter"],
+:root[data-theme="material-palenight"] {
+  --cp-bg: var(--wn-bg);
+  --cp-panel: var(--wn-panel);
+  --cp-panel-2: var(--wn-panel-2);
+  --cp-surface: var(--wn-card);
+  --cp-text: var(--wn-text);
+  --cp-muted: var(--wn-muted);
+  --cp-heading: var(--wn-text);
+  --cp-border: var(--wn-border);
+  --cp-border-soft: var(--wn-border);
+  --cp-reading-bg: var(--wn-editor-bg);
+  --cp-reading-text: var(--wn-editor-text);
+  --cp-link: var(--wn-accent);
+  --cp-accent: var(--wn-accent);
+  --cp-warning: var(--wn-warning, var(--cp-accent));
+  --cp-danger: var(--wn-danger, var(--cp-accent));
 }
 
 * {
@@ -51,7 +121,7 @@ body {
 
 .compendium-shell,
 .home-shell {
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--ef-primary-font, Georgia, "Times New Roman", serif);
   background: var(--cp-bg);
   color: var(--cp-text);
 }
@@ -93,6 +163,90 @@ body {
   padding: 22px 34px;
   border-bottom: 1px solid var(--cp-border);
   background: color-mix(in srgb, var(--cp-panel) 84%, transparent);
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.settings-popover {
+  z-index: 110;
+  padding: 12px;
+  border: 1px solid var(--cp-border);
+  border-radius: 8px;
+  background: var(--cp-panel);
+  box-shadow: 0 16px 42px color-mix(in srgb, #000 24%, transparent);
+}
+
+.home-settings-popover {
+  position: absolute;
+  top: 72px;
+  right: 34px;
+}
+
+.reader-settings-popover {
+  position: fixed;
+  top: 60px;
+  right: 16px;
+}
+
+.typography-setting {
+  display: grid;
+  gap: 6px;
+  color: var(--cp-muted);
+  font-size: 12px;
+}
+
+.settings-category {
+  margin: 0 0 4px;
+  color: var(--cp-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.settings-tab {
+  display: block;
+  margin-bottom: 10px;
+  color: var(--cp-heading);
+  font-size: 14px;
+}
+
+.typography-setting select {
+  min-width: 180px;
+  padding: 7px 9px;
+  border: 1px solid var(--cp-border);
+  border-radius: 6px;
+  background: var(--cp-panel-2);
+  color: var(--cp-text);
+  font: inherit;
+}
+
+.universe-settings-summary {
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+  margin-bottom: 10px;
+}
+
+.universe-settings-summary span {
+  color: var(--cp-heading);
+  font-weight: 700;
+}
+
+.universe-settings-summary small {
+  overflow-wrap: anywhere;
+  color: var(--cp-muted);
+}
+
+.universe-settings-summary button {
+  justify-self: start;
+  padding: 6px 8px;
+  border: 1px solid var(--cp-border);
+  border-radius: 6px;
+  color: var(--cp-text);
 }
 
 .brand {
@@ -231,9 +385,9 @@ body {
 .error-banner {
   margin-top: 18px;
   padding: 12px 14px;
-  border: 1px solid #a2543f;
+  border: 1px solid var(--cp-danger);
   border-radius: 8px;
-  background: color-mix(in srgb, #a2543f 18%, var(--cp-panel));
+  background: color-mix(in srgb, var(--cp-danger) 18%, var(--cp-panel));
   color: var(--cp-text);
 }
 
@@ -391,11 +545,12 @@ body {
 /* ---------- Reader top bar ---------- */
 
 .reader-top-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) auto minmax(250px, 1fr);
   align-items: center;
-  gap: 18px;
-  min-height: 52px;
-  padding: 0 16px 0 54px;
+  min-height: 42px;
+  max-height: 42px;
+  padding: 0 10px;
   border-bottom: 1px solid var(--cp-border);
   background: var(--cp-panel);
 }
@@ -403,19 +558,77 @@ body {
 .reader-top-left {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  min-width: 0;
+  padding-left: 44px;
 }
 
-.reader-brand {
-  font-size: 17px;
-  letter-spacing: 0.04em;
+.reader-top-divider {
+  width: 1px;
+  height: 24px;
+  background: var(--cp-border);
+}
+
+.reader-universe-button {
+  display: inline-flex;
+  align-items: center;
+  min-width: 210px;
+  max-width: 320px;
+  min-height: 32px;
+  gap: 6px;
+  padding: 3px 8px 3px 4px;
+  border-radius: 6px;
   color: var(--cp-accent);
-  padding: 4px 6px;
+  font-size: 13px;
+}
+
+.reader-universe-copy {
+  display: grid;
+  min-width: 0;
+  text-align: left;
+}
+
+.reader-universe-copy strong,
+.reader-universe-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reader-universe-copy strong {
+  font-size: 0.82rem;
+  line-height: 1.15;
+}
+
+.reader-universe-copy span {
+  color: var(--cp-muted);
+  font-size: 0.68rem;
+  line-height: 1.1;
+}
+
+.reader-top-left .reader-icon-button {
+  width: 28px;
+  height: 26px;
+  padding: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--cp-muted);
+}
+
+.reader-top-left .reader-icon-button:hover {
+  background: color-mix(in srgb, var(--cp-accent) 16%, transparent);
+  color: var(--cp-text);
+}
+
+.reader-top-left .reader-icon-button + .reader-icon-button {
+  margin-left: -4px;
 }
 
 .reader-nav {
   display: flex;
+  align-items: center;
   gap: 4px;
+  justify-self: center;
 }
 
 .reader-nav button {
@@ -439,8 +652,52 @@ body {
 .reader-top-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   margin-left: auto;
+  justify-self: end;
+}
+
+.graphs-menu {
+  position: relative;
+}
+
+.graphs-submenu {
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 50%;
+  z-index: 30;
+  display: grid;
+  min-width: 116px;
+  padding: 5px;
+  border: 1px solid var(--cp-border);
+  border-radius: 7px;
+  background: var(--cp-panel);
+  box-shadow: 0 14px 32px color-mix(in srgb, #000 22%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, -4px);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.graphs-menu:hover .graphs-submenu,
+.graphs-menu:focus-within .graphs-submenu {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, 0);
+}
+
+.graphs-submenu button {
+  padding: 5px 8px;
+  border-radius: 5px;
+  color: var(--cp-muted);
+  font-size: 12px;
+  text-align: left;
+}
+
+.graphs-submenu button:hover,
+.graphs-submenu button.active {
+  background: color-mix(in srgb, var(--cp-accent) 16%, transparent);
+  color: var(--cp-heading);
 }
 
 .mode-switch {
@@ -688,7 +945,7 @@ body {
 .warnings {
   margin-top: 40px;
   padding: 16px;
-  border: 1px solid #a2543f;
+  border: 1px solid var(--cp-accent);
   border-radius: 9px;
 }
 

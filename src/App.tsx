@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
-import { BookOpen, FolderOpen, Home, Moon, Sun } from "lucide-react";
+import { BookOpen, ExternalLink, FolderOpen, Home, Moon, Settings, Sun } from "lucide-react";
 import compendiumIcon from "./assets/everend-compendium-icon.png";
 import forgeLogoOnDark from "./assets/everend-forge-logo-on-dark.png";
 import forgeLogoOnLight from "./assets/everend-forge-logo-on-light.png";
@@ -23,8 +23,14 @@ import {
   openVaultDialog,
   revealVault,
 } from "./tauriBridge";
-import { isDarkTheme, themeForPreset, toggledThemeMode } from "./themes";
+import { isDarkTheme, THEMES, themeForPreset, toggledThemeMode, type ThemeId } from "./themes";
+import {
+  PRIMARY_FONT_OPTIONS,
+  primaryFontCssValue,
+  type PrimaryFontId,
+} from "./typography";
 import type { SiteData } from "./types";
+import type { SuiteChrome } from "./suiteChrome";
 
 const EVEREND_FORGE_GITHUB_URL = "https://github.com/Everendforge/everend-forge";
 const BUY_SUITE_URL = "https://everendforge.com/buy-suite";
@@ -51,12 +57,34 @@ function ForgeCornerLogo() {
 
 type AppView = "home" | "reader";
 type LoadState = "idle" | "loading" | "error";
+type SettingsScope = "app" | "universe";
 
 function universeDisplayName(path: string) {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
 }
 
-function App() {
+function TypographySettings({
+  value,
+  onChange,
+}: {
+  value: PrimaryFontId;
+  onChange: (font: PrimaryFontId) => void;
+}) {
+  return (
+    <label className="typography-setting">
+      <span>Primary typeface</span>
+      <select value={value} onChange={(event) => onChange(event.target.value as PrimaryFontId)}>
+        {PRIMARY_FONT_OPTIONS.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   const [settings, setSettings] = useState<CompendiumSettings>(() => loadSettings());
   const [view, setView] = useState<AppView>("home");
   const [site, setSite] = useState<SiteData>();
@@ -65,13 +93,20 @@ function App() {
   const [mode, setMode] = useState<ReaderMode>("web");
   const [route, setRoute] = useState("/");
   const [forgeMenuOpen, setForgeMenuOpen] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsScope, setSettingsScope] = useState<SettingsScope>("app");
   const forgeMenuRef = useRef<HTMLDivElement | null>(null);
   const appliedPresetRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
-    document.documentElement.dataset.theme = settings.theme;
+    document.documentElement.dataset.theme = suiteChrome?.suiteSettings?.style ?? settings.theme;
+    document.documentElement.style.setProperty(
+      "--ef-primary-font",
+      primaryFontCssValue(settings.primaryFont),
+    );
+    document.documentElement.style.removeProperty("--cp-accent");
     saveSettings(settings);
-  }, [settings]);
+  }, [settings, suiteChrome?.suiteSettings?.style]);
 
   useEffect(() => {
     if (!forgeMenuOpen) return;
@@ -98,10 +133,6 @@ function App() {
       appliedPresetRef.current = preset;
       setSettings((current) => ({ ...current, theme: themeForPreset(preset) }));
     }
-    document.documentElement.style.setProperty(
-      "--cp-accent",
-      data.config.theme?.accentColor ?? "#C89B3C",
-    );
   }, []);
 
   const loadUniverse = useCallback(
@@ -140,7 +171,33 @@ function App() {
   );
 
   const toggleTheme = useCallback(() => {
+    if (suiteChrome?.suiteSettings) {
+      suiteChrome.suiteSettings.onToggleStyleMode();
+      return;
+    }
     setSettings((current) => ({ ...current, theme: toggledThemeMode(current.theme) }));
+  }, [suiteChrome?.suiteSettings]);
+
+  const effectivePrimaryFont = (suiteChrome?.suiteSettings?.primaryFont ??
+    settings.primaryFont) as PrimaryFontId;
+  const setPrimaryFont = useCallback(
+    (primaryFont: PrimaryFontId) => {
+      if (suiteChrome?.suiteSettings) {
+        suiteChrome.suiteSettings.onPrimaryFontChange(primaryFont);
+        return;
+      }
+      setSettings((current) => ({ ...current, primaryFont }));
+    },
+    [suiteChrome?.suiteSettings],
+  );
+
+  const setStandaloneStyle = useCallback((theme: ThemeId) => {
+    setSettings((current) => ({ ...current, theme }));
+  }, []);
+
+  const openSettings = useCallback((scope: SettingsScope) => {
+    setSettingsScope(scope);
+    setShowSettings(true);
   }, []);
 
   useEffect(() => {
@@ -196,19 +253,64 @@ function App() {
           <div className="brand">
             <img className="app-brand-icon" src={compendiumIcon} alt="" aria-hidden="true" />
             <div>
-              <h1>Everend Compendium</h1>
+              <h1>Compendium</h1>
               <p>A readable edition of your universe</p>
             </div>
           </div>
-          <button
-            type="button"
-            className="icon-button"
-            onClick={toggleTheme}
-            title="Toggle theme"
-          >
-            {isDarkTheme(settings.theme) ? <Sun size={16} /> : <Moon size={16} />}
-          </button>
+          <div className="header-actions">
+            <button
+              type="button"
+              className="icon-button"
+              onClick={() => openSettings("app")}
+              aria-expanded={showSettings}
+              title="Settings"
+            >
+              <Settings size={16} />
+            </button>
+            <button
+              type="button"
+              className="icon-button"
+              onClick={toggleTheme}
+              title="Toggle theme"
+            >
+              {isDarkTheme(settings.theme) ? <Sun size={16} /> : <Moon size={16} />}
+            </button>
+          </div>
         </header>
+        {showSettings ? (
+          <div className="settings-popover home-settings-popover">
+            <p className="settings-category">{settingsScope === "universe" ? "Universe" : suiteChrome ? "Forge" : "Application"}</p>
+            <strong className="settings-tab">{settingsScope === "universe" ? "Current universe" : suiteChrome ? "Suite" : "Typography"}</strong>
+            {settingsScope === "universe" && site ? (
+              <div className="universe-settings-summary">
+                <span>{site.title}</span>
+                <small>{site.vaultPath}</small>
+                <button type="button" onClick={() => void revealVault(site.vaultPath)}>
+                  Show in Finder
+                </button>
+              </div>
+            ) : null}
+            {settingsScope === "app" ? (
+              <label className="typography-setting">
+                <span>Style</span>
+                <select
+                  value={suiteChrome?.suiteSettings?.style ?? settings.theme}
+                  onChange={(event) => {
+                    if (suiteChrome?.suiteSettings) suiteChrome.suiteSettings.onStyleChange(event.target.value);
+                    else setStandaloneStyle(event.target.value as ThemeId);
+                  }}
+                >
+                  {THEMES.map((theme) => (
+                    <option key={theme.id} value={theme.id}>
+                      {theme.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            {settingsScope === "app" ? <TypographySettings value={effectivePrimaryFont} onChange={setPrimaryFont} /> : null}
+          </div>
+        ) : null}
         <section className="home-panel">
           <div className="home-hero">
             <div className="home-copy">
@@ -306,29 +408,43 @@ function App() {
           <button
             type="button"
             className="reader-icon-button"
-            onClick={() => setView("home")}
+            onClick={suiteChrome?.onHome ?? (() => setView("home"))}
             title="Home"
           >
             <Home size={15} />
           </button>
+          <span className="reader-top-divider" aria-hidden="true" />
           <button
             type="button"
-            className="reader-brand"
-            onClick={() => navigate("/")}
+            className="reader-universe-button"
+            onClick={() => openSettings("universe")}
             title={site.vaultPath}
           >
-            {site.title}
+            <BookOpen size={28} />
+            <span className="reader-universe-copy">
+              <strong>{site.title}</strong>
+              <span>{universeDisplayName(site.vaultPath)}</span>
+            </span>
+          </button>
+          <button
+            type="button"
+            className="reader-icon-button"
+            onClick={() => openSettings("app")}
+            title="Application settings"
+          >
+            <Settings size={15} />
+          </button>
+          <button
+            type="button"
+            className="reader-icon-button"
+            onClick={() => void revealVault(site.vaultPath)}
+            title="Show universe in Finder"
+          >
+            <ExternalLink size={15} />
           </button>
         </div>
 
         <nav className="reader-nav" aria-label="Primary navigation">
-          <button
-            type="button"
-            className={route === "/" ? "active" : ""}
-            onClick={() => navigate("/")}
-          >
-            Universe
-          </button>
           <button
             type="button"
             className={route.startsWith("/stories/") ? "active" : ""}
@@ -336,31 +452,19 @@ function App() {
           >
             Stories
           </button>
-          <button
-            type="button"
-            className={route === "/graph/" ? "active" : ""}
-            onClick={() => navigate("/graph/")}
-          >
-            Graph
+          <button type="button" className={route === "/" ? "active" : ""} onClick={() => navigate("/")}>
+            Universe
           </button>
-          {hasTimeline ? (
-            <button
-              type="button"
-              className={route === "/timeline/" ? "active" : ""}
-              onClick={() => navigate("/timeline/")}
-            >
-              Timeline
+          <div className="graphs-menu">
+            <button type="button" className={route === "/graph/" ? "active" : ""} onClick={() => navigate("/graph/")}>
+              Graphs
             </button>
-          ) : null}
-          {hasMaps ? (
-            <button
-              type="button"
-              className={route === "/maps/" ? "active" : ""}
-              onClick={() => navigate("/maps/")}
-            >
-              Maps
-            </button>
-          ) : null}
+            <div className="graphs-submenu" aria-label="Graphs">
+              <button type="button" className={route === "/graph/" ? "active" : ""} onClick={() => navigate("/graph/")}>Graph</button>
+              {hasTimeline ? <button type="button" className={route === "/timeline/" ? "active" : ""} onClick={() => navigate("/timeline/")}>Timeline</button> : null}
+              {hasMaps ? <button type="button" className={route === "/maps/" ? "active" : ""} onClick={() => navigate("/maps/")}>Maps</button> : null}
+            </div>
+          </div>
         </nav>
 
         <div className="reader-top-right">
@@ -384,6 +488,15 @@ function App() {
           <button
             type="button"
             className="reader-icon-button"
+            onClick={() => openSettings("app")}
+            aria-expanded={showSettings}
+            title="Settings"
+          >
+            <Settings size={15} />
+          </button>
+          <button
+            type="button"
+            className="reader-icon-button"
             onClick={toggleTheme}
             title="Toggle theme"
           >
@@ -391,6 +504,41 @@ function App() {
           </button>
         </div>
       </div>
+
+      {showSettings ? (
+        <div className="settings-popover reader-settings-popover">
+          <p className="settings-category">{settingsScope === "universe" ? "Universe" : suiteChrome ? "Forge" : "Application"}</p>
+          <strong className="settings-tab">{settingsScope === "universe" ? "Current universe" : suiteChrome ? "Suite" : "Typography"}</strong>
+          {settingsScope === "universe" ? (
+            <div className="universe-settings-summary">
+              <span>{site.title}</span>
+              <small>{site.vaultPath}</small>
+              <button type="button" onClick={() => void revealVault(site.vaultPath)}>
+                Show in Finder
+              </button>
+            </div>
+          ) : null}
+          {settingsScope === "app" ? (
+            <label className="typography-setting">
+              <span>Style</span>
+              <select
+                value={suiteChrome?.suiteSettings?.style ?? settings.theme}
+                onChange={(event) => {
+                  if (suiteChrome?.suiteSettings) suiteChrome.suiteSettings.onStyleChange(event.target.value);
+                  else setStandaloneStyle(event.target.value as ThemeId);
+                }}
+              >
+                {THEMES.map((theme) => (
+                  <option key={theme.id} value={theme.id}>
+                    {theme.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {settingsScope === "app" ? <TypographySettings value={effectivePrimaryFont} onChange={setPrimaryFont} /> : null}
+        </div>
+      ) : null}
 
       {loadState === "error" && errorMessage ? (
         <div className="reader-status">{errorMessage}</div>
