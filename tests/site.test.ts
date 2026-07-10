@@ -2,9 +2,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { renderMarkdown } from "../src/lib/vault.js";
-import { loadSite } from "../src/lib/site.js";
-import { exportMarkdown } from "../src/lib/markdown-export.js";
+import { renderMarkdown } from "../src/lib/node/render.js";
+import { loadSite } from "../src/lib/node/site.js";
+import { exportMarkdown } from "../src/lib/node/markdown-export.js";
 
 const fixture = path.resolve("tests/fixtures/vault");
 

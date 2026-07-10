@@ -14,6 +14,12 @@ export type CompendiumConfig = {
   narrative?: { mode?: "scenes-and-relations" };
 };
 
+/** A vault file already read into memory (from Node fs or the Tauri backend). */
+export type SourceFile = {
+  relativePath: string;
+  content: string;
+};
+
 export type Entity = {
   id: string;
   type: string;
@@ -26,9 +32,19 @@ export type Entity = {
   path: string;
   body: string;
   wikilinks: string[];
+  /** Entity ids this entity's wikilinks resolve to. */
+  linkedIds: string[];
   backlinks: string[];
   route: string;
   html: string;
+  /** Optional timeline convention: a single date or a start/end range. */
+  date?: string;
+  start?: string;
+  end?: string;
+  /** Optional map-pin convention: id of a Map entity plus 0-100 percent coordinates. */
+  map?: string;
+  mapX?: number;
+  mapY?: number;
 };
 
 export type StoryEvent = {
@@ -38,6 +54,7 @@ export type StoryEvent = {
   text?: string;
   canonRefs: string[];
   route: string;
+  html: string;
 };
 export type Story = {
   id: string;

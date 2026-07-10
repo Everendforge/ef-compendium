@@ -1,30 +1,23 @@
-import fs from "node:fs";
-import path from "node:path";
-import { marked } from "marked";
-import sanitizeHtml from "sanitize-html";
 import YAML from "yaml";
-import type { Entity } from "../types.js";
-import { entityRoute, isSafeVaultPath } from "./paths.js";
+import type { Entity, SourceFile } from "../types.js";
+import {
+  findWikilinks,
+  renderMarkdownWith,
+  type LinkResolver,
+  type Sanitizer,
+} from "./markdown.js";
+import { entityRoute } from "./paths.js";
 
 type ParsedDocument = { frontmatter: Record<string, unknown>; body: string };
 
-function walk(directory: string, result: string[] = []) {
-  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
-    if (entry.name === ".everend" || entry.name.startsWith(".")) continue;
-    const file = path.join(directory, entry.name);
-    if (entry.isDirectory()) walk(file, result);
-    else if (entry.isFile() && entry.name.endsWith(".md")) result.push(file);
-  }
-  return result;
-}
-
 function parseDocument(source: string): ParsedDocument | undefined {
-  if (!source.startsWith("---\n")) return undefined;
-  const end = source.indexOf("\n---", 4);
+  const normalized = source.replace(/\r\n/g, "\n");
+  if (!normalized.startsWith("---\n")) return undefined;
+  const end = normalized.indexOf("\n---", 4);
   if (end < 0) return undefined;
   return {
-    frontmatter: YAML.parse(source.slice(4, end)) ?? {},
-    body: source.slice(end + 4).trim(),
+    frontmatter: YAML.parse(normalized.slice(4, end)) ?? {},
+    body: normalized.slice(end + 4).trim(),
   };
 }
 
@@ -34,85 +27,51 @@ function asStringList(value: unknown) {
     : [];
 }
 
+function asOptionalString(value: unknown) {
+  return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function asOptionalNumber(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() && !Number.isNaN(Number(value))) {
+    return Number(value);
+  }
+  return undefined;
+}
+
+function fileBaseName(relativePath: string) {
+  const name = relativePath.split("/").pop() ?? relativePath;
+  return name.replace(/\.[^.]+$/, "");
+}
+
 function lookupKeys(entity: Entity) {
-  const fileBase = path.basename(entity.path, path.extname(entity.path));
-  return [entity.id, entity.name, fileBase, ...entity.aliases].map((value) =>
-    value.trim().toLowerCase(),
+  return [entity.id, entity.name, fileBaseName(entity.path), ...entity.aliases].map(
+    (value) => value.trim().toLowerCase(),
   );
 }
 
-export function findWikilinks(body: string) {
-  return Array.from(
-    body.matchAll(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g),
-    (match) => match[1].trim(),
-  );
+/** True for vault markdown documents the projection should consider. */
+function isEntityDocument(relativePath: string) {
+  if (!relativePath.endsWith(".md")) return false;
+  const segments = relativePath.split("/");
+  if (segments.some((segment) => segment.startsWith("."))) return false;
+  const parentName = segments.length > 1 ? segments[segments.length - 2] : undefined;
+  if (parentName && segments[segments.length - 1] === `${parentName}.md`) return false;
+  return true;
 }
 
-export function findMarkdownAssets(body: string) {
-  return Array.from(
-    body.matchAll(/!\[[^\]]*\]\(([^\s)]+)(?:\s+[^)]*)?\)/g),
-    (match) => match[1],
-  ).filter(isSafeVaultPath);
-}
-
-export function renderMarkdown(
-  body: string,
-  resolveLink: (target: string) => { route: string; label: string } | undefined,
-) {
-  const withAssets = body.replace(
-    /!\[([^\]]*)\]\(([^\s)]+)(?:\s+[^)]*)?\)/g,
-    (full, alt: string, asset: string) => {
-      return isSafeVaultPath(asset) ? `![${alt}](/assets/${asset})` : full;
-    },
-  );
-  const linked = withAssets.replace(
-    /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g,
-    (_full, target: string, alias?: string) => {
-      const resolved = resolveLink(target.trim());
-      if (!resolved) return alias?.trim() || target.trim();
-      return `[${alias?.trim() || resolved.label}](${resolved.route})`;
-    },
-  );
-  return sanitizeHtml(marked.parse(linked, { async: false, breaks: true }), {
-    allowedTags: [
-      "a",
-      "p",
-      "h1",
-      "h2",
-      "h3",
-      "h4",
-      "blockquote",
-      "strong",
-      "em",
-      "code",
-      "pre",
-      "ul",
-      "ol",
-      "li",
-      "hr",
-      "br",
-      "img",
-    ],
-    allowedAttributes: { a: ["href", "title"], img: ["src", "alt", "title"] },
-    allowedSchemes: ["http", "https"],
-    allowProtocolRelative: false,
-  });
-}
-
-export function indexVault(
-  vaultPath: string,
+export function projectEntities(
+  files: SourceFile[],
   publishedStatuses: string[],
   warnings: string[],
+  sanitize: Sanitizer,
 ): Entity[] {
   const entities: Entity[] = [];
   const seenIds = new Set<string>();
-  for (const fullPath of walk(vaultPath)) {
-    const relativePath = path
-      .relative(vaultPath, fullPath)
-      .replaceAll(path.sep, "/");
-    const parentName = path.basename(path.dirname(fullPath));
-    if (path.basename(fullPath) === `${parentName}.md`) continue;
-    const parsed = parseDocument(fs.readFileSync(fullPath, "utf8"));
+  for (const file of files) {
+    const relativePath = file.relativePath.replaceAll("\\", "/");
+    if (!isEntityDocument(relativePath)) continue;
+    const parsed = parseDocument(file.content);
     if (!parsed) continue;
     const { id, type, name, status } = parsed.frontmatter;
     if (
@@ -149,9 +108,16 @@ export function indexVault(
       path: relativePath,
       body: parsed.body,
       wikilinks: findWikilinks(parsed.body),
+      linkedIds: [],
       backlinks: [],
       route: entityRoute(type, id),
       html: "",
+      date: asOptionalString(parsed.frontmatter.date),
+      start: asOptionalString(parsed.frontmatter.start),
+      end: asOptionalString(parsed.frontmatter.end),
+      map: asOptionalString(parsed.frontmatter.map),
+      mapX: asOptionalNumber(parsed.frontmatter.mapX),
+      mapY: asOptionalNumber(parsed.frontmatter.mapY),
     });
   }
 
@@ -162,14 +128,35 @@ export function indexVault(
   entities.forEach((entity) => {
     entity.wikilinks.forEach((target) => {
       const resolved = byKey.get(target.toLowerCase());
-      if (resolved) resolved.backlinks.push(entity.id);
+      if (resolved) {
+        resolved.backlinks.push(entity.id);
+        if (!entity.linkedIds.includes(resolved.id)) {
+          entity.linkedIds.push(resolved.id);
+        }
+      }
     });
-    entity.html = renderMarkdown(entity.body, (target) => {
-      const resolved = byKey.get(target.toLowerCase());
-      return resolved
-        ? { route: resolved.route, label: resolved.name }
-        : undefined;
-    });
+    entity.html = renderMarkdownWith(
+      entity.body,
+      (target) => {
+        const resolved = byKey.get(target.toLowerCase());
+        return resolved
+          ? { route: resolved.route, label: resolved.name }
+          : undefined;
+      },
+      sanitize,
+    );
   });
   return entities.sort((left, right) => left.name.localeCompare(right.name));
+}
+
+/** Resolver over projected entities, matching id, name, file base, or alias. */
+export function entityLinkResolver(entities: Entity[]): LinkResolver {
+  const byKey = new Map<string, Entity>();
+  entities.forEach((entity) =>
+    lookupKeys(entity).forEach((key) => byKey.set(key, entity)),
+  );
+  return (target) => {
+    const resolved = byKey.get(target.toLowerCase());
+    return resolved ? { route: resolved.route, label: resolved.name } : undefined;
+  };
 }

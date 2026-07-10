@@ -1,5 +1,11 @@
 node_modules/
 dist/
+dist-app/
+dist-check/
 .astro/
 coverage/
 .DS_Store
+
+# Tauri build artifacts
+src-tauri/target/
+src-tauri/gen/

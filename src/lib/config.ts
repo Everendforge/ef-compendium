@@ -1,7 +1,7 @@
-import fs from "node:fs";
-import path from "node:path";
 import YAML from "yaml";
 import type { CompendiumConfig } from "../types.js";
+
+export const CONFIG_RELATIVE_PATH = ".everend/compendium.yaml";
 
 export const defaultConfig: CompendiumConfig = {
   specVersion: "0.1",
@@ -10,20 +10,18 @@ export const defaultConfig: CompendiumConfig = {
   narrative: { mode: "scenes-and-relations" },
 };
 
-export function configPath(vaultPath: string) {
-  return path.join(vaultPath, ".everend", "compendium.yaml");
-}
-
-export function loadConfig(vaultPath: string): CompendiumConfig {
-  const file = configPath(vaultPath);
-  if (!fs.existsSync(file)) return structuredClone(defaultConfig);
-  const value = YAML.parse(fs.readFileSync(file, "utf8")) as CompendiumConfig;
+export function parseConfig(
+  source: string | undefined,
+  label = CONFIG_RELATIVE_PATH,
+): CompendiumConfig {
+  if (source === undefined) return structuredClone(defaultConfig);
+  const value = YAML.parse(source) as CompendiumConfig;
   if (!value || value.specVersion !== "0.1")
-    throw new Error(`${file} must set specVersion: "0.1".`);
+    throw new Error(`${label} must set specVersion: "0.1".`);
   if (value.publication?.statuses?.length === 0)
-    throw new Error(`${file} publication.statuses cannot be empty.`);
+    throw new Error(`${label} publication.statuses cannot be empty.`);
   if (value.narrative?.mode && value.narrative.mode !== "scenes-and-relations")
-    throw new Error(`${file} has an unsupported narrative mode.`);
+    throw new Error(`${label} has an unsupported narrative mode.`);
   return {
     ...structuredClone(defaultConfig),
     ...value,

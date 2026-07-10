@@ -1,16 +1,10 @@
-import fs from "node:fs";
-import path from "node:path";
-import type { Story, StoryEvent } from "../types.js";
+import type { SourceFile, Story, StoryEvent } from "../types.js";
 import { eventRoute, stableSlug, storyRoute } from "./paths.js";
 
 type Json = Record<string, unknown>;
-const readJson = (file: string): Json | undefined => {
-  try {
-    return JSON.parse(fs.readFileSync(file, "utf8")) as Json;
-  } catch {
-    return undefined;
-  }
-};
+
+const PB_ROOT = ".everend/.pathbranching";
+
 const list = (value: unknown): string[] =>
   Array.isArray(value)
     ? value.filter((item): item is string => typeof item === "string")
@@ -36,6 +30,7 @@ function eventFrom(value: Json, storyId: string): StoryEvent | undefined {
     text: text ? valueString(text.content) : undefined,
     canonRefs: list(event.canonRefs),
     route: eventRoute(storyId, id),
+    html: "",
   };
 }
 
@@ -53,9 +48,22 @@ function legacyStory(value: Json, id: string, name: string): Story {
   };
 }
 
-export function readStories(vaultPath: string, warnings: string[]): Story[] {
-  const root = path.join(vaultPath, ".everend", ".pathbranching");
-  const manifest = readJson(path.join(root, "manifest.json"));
+export function projectStories(files: SourceFile[], warnings: string[]): Story[] {
+  const byPath = new Map<string, string>();
+  for (const file of files) {
+    byPath.set(file.relativePath.replaceAll("\\", "/"), file.content);
+  }
+  const readJson = (relativePath: string): Json | undefined => {
+    const content = byPath.get(relativePath);
+    if (content === undefined) return undefined;
+    try {
+      return JSON.parse(content) as Json;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const manifest = readJson(`${PB_ROOT}/manifest.json`);
   const entries = Array.isArray(manifest?.stories) ? manifest.stories : [];
   const stories: Story[] = [];
   for (const entryValue of entries) {
@@ -67,7 +75,7 @@ export function readStories(vaultPath: string, warnings: string[]): Story[] {
       warnings.push("Ignored an invalid PathBranching story manifest entry.");
       continue;
     }
-    const saved = readJson(path.join(vaultPath, relative));
+    const saved = readJson(relative.replaceAll("\\", "/"));
     if (!saved) {
       warnings.push(`Could not read PathBranching story ${name}.`);
       continue;
@@ -77,14 +85,7 @@ export function readStories(vaultPath: string, warnings: string[]): Story[] {
       continue;
     }
     const sequences = list(saved.sequenceIds).flatMap((sequenceId) => {
-      const sequenceFile = path.join(
-        root,
-        "stories",
-        pbSlug(id),
-        "sequences",
-        pbSlug(sequenceId),
-        "sequence.json",
-      );
+      const sequenceFile = `${PB_ROOT}/stories/${pbSlug(id)}/sequences/${pbSlug(sequenceId)}/sequence.json`;
       const sequenceSource = readJson(sequenceFile);
       const sequence = sequenceSource
         ? (record(sequenceSource.sequence) ?? sequenceSource)
@@ -95,15 +96,7 @@ export function readStories(vaultPath: string, warnings: string[]): Story[] {
       }
       const eventIds = list(sequence.eventIds);
       const events = eventIds.flatMap((eventId) => {
-        const eventFile = path.join(
-          root,
-          "stories",
-          pbSlug(id),
-          "sequences",
-          pbSlug(sequenceId),
-          "events",
-          `${pbSlug(eventId)}.json`,
-        );
+        const eventFile = `${PB_ROOT}/stories/${pbSlug(id)}/sequences/${pbSlug(sequenceId)}/events/${pbSlug(eventId)}.json`;
         const event = readJson(eventFile);
         const projected = event && eventFrom(event, id);
         return projected ? [projected] : [];
