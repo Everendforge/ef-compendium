@@ -14,8 +14,8 @@ export function StoriesIndex({
         <p className="chapter">Narrative archive</p>
         <h1>Stories</h1>
         <p>
-          Editorial scenes and their canon relationships, without interactive-game
-          logic.
+          Editorial scenes and their canon relationships, without
+          interactive-game logic.
         </p>
       </section>
       <section className="story-list">

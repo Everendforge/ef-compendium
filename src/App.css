@@ -48,9 +48,16 @@
 :root[data-theme="dracula-light"],
 :root[data-theme="light-owl"],
 :root[data-theme="material-lighter"] {
-  --wn-bg: #f6f7f5; --wn-panel: #fff; --wn-panel-2: #f1f3f0; --wn-card: #fff;
-  --wn-border: #dcded9; --wn-text: #202522; --wn-muted: #737b75;
-  --wn-accent: #3f7f64; --wn-editor-bg: #fff; --wn-editor-text: #191f1b;
+  --wn-bg: #f6f7f5;
+  --wn-panel: #fff;
+  --wn-panel-2: #f1f3f0;
+  --wn-card: #fff;
+  --wn-border: #dcded9;
+  --wn-text: #202522;
+  --wn-muted: #737b75;
+  --wn-accent: #3f7f64;
+  --wn-editor-bg: #fff;
+  --wn-editor-text: #191f1b;
 }
 
 :root[data-theme="worldnotion-dark"],
@@ -59,21 +66,122 @@
 :root[data-theme="dracula"],
 :root[data-theme="night-owl"],
 :root[data-theme="material-palenight"] {
-  --wn-bg: #181a19; --wn-panel: #202321; --wn-panel-2: #282c29; --wn-card: #202321;
-  --wn-border: #3a403c; --wn-text: #e7ece8; --wn-muted: #9ca59f;
-  --wn-accent: #7cc7a2; --wn-editor-bg: #141615; --wn-editor-text: #e7ece8;
+  --wn-bg: #181a19;
+  --wn-panel: #202321;
+  --wn-panel-2: #282c29;
+  --wn-card: #202321;
+  --wn-border: #3a403c;
+  --wn-text: #e7ece8;
+  --wn-muted: #9ca59f;
+  --wn-accent: #7cc7a2;
+  --wn-editor-bg: #141615;
+  --wn-editor-text: #e7ece8;
 }
 
-:root[data-theme="github"] { --wn-bg: #f6f8fa; --wn-panel-2: #eef2f6; --wn-border: #d0d7de; --wn-text: #1f2328; --wn-muted: #656d76; --wn-accent: #0969da; }
-:root[data-theme="github-dark"] { --wn-bg: #0d1117; --wn-panel: #161b22; --wn-panel-2: #21262d; --wn-card: #161b22; --wn-border: #30363d; --wn-text: #e6edf3; --wn-muted: #8b949e; --wn-accent: #58a6ff; --wn-editor-bg: #0d1117; --wn-editor-text: #e6edf3; }
-:root[data-theme="one-light-pro"] { --wn-bg: #fafafa; --wn-panel-2: #eef0f3; --wn-border: #d7dae0; --wn-text: #383a42; --wn-muted: #696c77; --wn-accent: #4078f2; }
-:root[data-theme="one-dark-pro"] { --wn-bg: #21252b; --wn-panel: #282c34; --wn-panel-2: #2f333d; --wn-card: #282c34; --wn-border: #3e4451; --wn-text: #abb2bf; --wn-muted: #7f848e; --wn-accent: #61afef; --wn-editor-bg: #1f2329; --wn-editor-text: #abb2bf; }
-:root[data-theme="dracula-light"] { --wn-bg: #f7f4fb; --wn-panel-2: #eee8f8; --wn-border: #d9cdec; --wn-text: #2d2438; --wn-muted: #776889; --wn-accent: #7c4dff; --wn-editor-bg: #fffaff; --wn-editor-text: #2d2438; }
-:root[data-theme="dracula"] { --wn-bg: #282a36; --wn-panel: #343746; --wn-panel-2: #44475a; --wn-card: #343746; --wn-border: #52566d; --wn-text: #f8f8f2; --wn-muted: #a6accd; --wn-accent: #bd93f9; --wn-editor-bg: #242631; --wn-editor-text: #f8f8f2; }
-:root[data-theme="light-owl"] { --wn-bg: #f0f8ff; --wn-panel-2: #dfeef8; --wn-border: #c7d9e6; --wn-text: #243b53; --wn-muted: #627d98; --wn-accent: #2f80ed; --wn-editor-bg: #fbfdff; --wn-editor-text: #243b53; }
-:root[data-theme="night-owl"] { --wn-bg: #011627; --wn-panel: #0b253a; --wn-panel-2: #12324a; --wn-card: #0b253a; --wn-border: #21445f; --wn-text: #d6deeb; --wn-muted: #7f9bb3; --wn-accent: #82aaff; --wn-editor-bg: #011221; --wn-editor-text: #d6deeb; }
-:root[data-theme="material-lighter"] { --wn-bg: #f5f7ff; --wn-panel-2: #e8ebf7; --wn-border: #d1d6e8; --wn-text: #303348; --wn-muted: #676e95; --wn-accent: #7e57c2; }
-:root[data-theme="material-palenight"] { --wn-bg: #292d3e; --wn-panel: #303348; --wn-panel-2: #3a3f58; --wn-card: #303348; --wn-border: #4a506b; --wn-text: #a6accd; --wn-muted: #8790b2; --wn-accent: #c792ea; --wn-editor-bg: #25293a; --wn-editor-text: #a6accd; }
+:root[data-theme="github"] {
+  --wn-bg: #f6f8fa;
+  --wn-panel-2: #eef2f6;
+  --wn-border: #d0d7de;
+  --wn-text: #1f2328;
+  --wn-muted: #656d76;
+  --wn-accent: #0969da;
+}
+:root[data-theme="github-dark"] {
+  --wn-bg: #0d1117;
+  --wn-panel: #161b22;
+  --wn-panel-2: #21262d;
+  --wn-card: #161b22;
+  --wn-border: #30363d;
+  --wn-text: #e6edf3;
+  --wn-muted: #8b949e;
+  --wn-accent: #58a6ff;
+  --wn-editor-bg: #0d1117;
+  --wn-editor-text: #e6edf3;
+}
+:root[data-theme="one-light-pro"] {
+  --wn-bg: #fafafa;
+  --wn-panel-2: #eef0f3;
+  --wn-border: #d7dae0;
+  --wn-text: #383a42;
+  --wn-muted: #696c77;
+  --wn-accent: #4078f2;
+}
+:root[data-theme="one-dark-pro"] {
+  --wn-bg: #21252b;
+  --wn-panel: #282c34;
+  --wn-panel-2: #2f333d;
+  --wn-card: #282c34;
+  --wn-border: #3e4451;
+  --wn-text: #abb2bf;
+  --wn-muted: #7f848e;
+  --wn-accent: #61afef;
+  --wn-editor-bg: #1f2329;
+  --wn-editor-text: #abb2bf;
+}
+:root[data-theme="dracula-light"] {
+  --wn-bg: #f7f4fb;
+  --wn-panel-2: #eee8f8;
+  --wn-border: #d9cdec;
+  --wn-text: #2d2438;
+  --wn-muted: #776889;
+  --wn-accent: #7c4dff;
+  --wn-editor-bg: #fffaff;
+  --wn-editor-text: #2d2438;
+}
+:root[data-theme="dracula"] {
+  --wn-bg: #282a36;
+  --wn-panel: #343746;
+  --wn-panel-2: #44475a;
+  --wn-card: #343746;
+  --wn-border: #52566d;
+  --wn-text: #f8f8f2;
+  --wn-muted: #a6accd;
+  --wn-accent: #bd93f9;
+  --wn-editor-bg: #242631;
+  --wn-editor-text: #f8f8f2;
+}
+:root[data-theme="light-owl"] {
+  --wn-bg: #f0f8ff;
+  --wn-panel-2: #dfeef8;
+  --wn-border: #c7d9e6;
+  --wn-text: #243b53;
+  --wn-muted: #627d98;
+  --wn-accent: #2f80ed;
+  --wn-editor-bg: #fbfdff;
+  --wn-editor-text: #243b53;
+}
+:root[data-theme="night-owl"] {
+  --wn-bg: #011627;
+  --wn-panel: #0b253a;
+  --wn-panel-2: #12324a;
+  --wn-card: #0b253a;
+  --wn-border: #21445f;
+  --wn-text: #d6deeb;
+  --wn-muted: #7f9bb3;
+  --wn-accent: #82aaff;
+  --wn-editor-bg: #011221;
+  --wn-editor-text: #d6deeb;
+}
+:root[data-theme="material-lighter"] {
+  --wn-bg: #f5f7ff;
+  --wn-panel-2: #e8ebf7;
+  --wn-border: #d1d6e8;
+  --wn-text: #303348;
+  --wn-muted: #676e95;
+  --wn-accent: #7e57c2;
+}
+:root[data-theme="material-palenight"] {
+  --wn-bg: #292d3e;
+  --wn-panel: #303348;
+  --wn-panel-2: #3a3f58;
+  --wn-card: #303348;
+  --wn-border: #4a506b;
+  --wn-text: #a6accd;
+  --wn-muted: #8790b2;
+  --wn-accent: #c792ea;
+  --wn-editor-bg: #25293a;
+  --wn-editor-text: #a6accd;
+}
 
 /* In the Suite, Compendium follows the selected WorldNotion style. */
 :root[data-theme="worldnotion-light"],
@@ -152,7 +260,11 @@ body {
   display: flex;
   flex-direction: column;
   background:
-    radial-gradient(1200px 500px at 80% -10%, color-mix(in srgb, var(--cp-accent) 14%, transparent), transparent),
+    radial-gradient(
+      1200px 500px at 80% -10%,
+      color-mix(in srgb, var(--cp-accent) 14%, transparent),
+      transparent
+    ),
     var(--cp-bg);
 }
 
@@ -676,7 +788,9 @@ body {
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, -4px);
-  transition: opacity 140ms ease, transform 140ms ease;
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease;
 }
 
 .graphs-menu:hover .graphs-submenu,
@@ -864,7 +978,11 @@ body {
   border-radius: 12px;
   padding: 56px 44px;
   background:
-    linear-gradient(90deg, color-mix(in srgb, var(--cp-panel) 92%, transparent), color-mix(in srgb, var(--cp-panel) 40%, transparent)),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--cp-panel) 92%, transparent),
+      color-mix(in srgb, var(--cp-panel) 40%, transparent)
+    ),
     var(--cp-panel-2);
   background-size: cover;
   background-position: center;

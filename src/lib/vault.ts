@@ -33,7 +33,11 @@ function asOptionalString(value: unknown) {
 
 function asOptionalNumber(value: unknown) {
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string" && value.trim() && !Number.isNaN(Number(value))) {
+  if (
+    typeof value === "string" &&
+    value.trim() &&
+    !Number.isNaN(Number(value))
+  ) {
     return Number(value);
   }
   return undefined;
@@ -45,9 +49,12 @@ function fileBaseName(relativePath: string) {
 }
 
 function lookupKeys(entity: Entity) {
-  return [entity.id, entity.name, fileBaseName(entity.path), ...entity.aliases].map(
-    (value) => value.trim().toLowerCase(),
-  );
+  return [
+    entity.id,
+    entity.name,
+    fileBaseName(entity.path),
+    ...entity.aliases,
+  ].map((value) => value.trim().toLowerCase());
 }
 
 /** True for vault markdown documents the projection should consider. */
@@ -55,8 +62,10 @@ function isEntityDocument(relativePath: string) {
   if (!relativePath.endsWith(".md")) return false;
   const segments = relativePath.split("/");
   if (segments.some((segment) => segment.startsWith("."))) return false;
-  const parentName = segments.length > 1 ? segments[segments.length - 2] : undefined;
-  if (parentName && segments[segments.length - 1] === `${parentName}.md`) return false;
+  const parentName =
+    segments.length > 1 ? segments[segments.length - 2] : undefined;
+  if (parentName && segments[segments.length - 1] === `${parentName}.md`)
+    return false;
   return true;
 }
 
@@ -157,6 +166,8 @@ export function entityLinkResolver(entities: Entity[]): LinkResolver {
   );
   return (target) => {
     const resolved = byKey.get(target.toLowerCase());
-    return resolved ? { route: resolved.route, label: resolved.name } : undefined;
+    return resolved
+      ? { route: resolved.route, label: resolved.name }
+      : undefined;
   };
 }

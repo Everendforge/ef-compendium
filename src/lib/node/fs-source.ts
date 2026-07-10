@@ -9,7 +9,8 @@ const ALLOWED_DOT_DIRS = new Set([".everend", ".pathbranching"]);
 
 function walk(root: string, current: string, files: SourceFile[]) {
   for (const entry of fs.readdirSync(current, { withFileTypes: true })) {
-    if (entry.name.startsWith(".") && !ALLOWED_DOT_DIRS.has(entry.name)) continue;
+    if (entry.name.startsWith(".") && !ALLOWED_DOT_DIRS.has(entry.name))
+      continue;
     const fullPath = path.join(current, entry.name);
     if (entry.isDirectory()) {
       walk(root, fullPath, files);
@@ -32,6 +33,8 @@ function walk(root: string, current: string, files: SourceFile[]) {
 export function walkVaultFiles(vaultPath: string): SourceFile[] {
   const files: SourceFile[] = [];
   walk(vaultPath, vaultPath, files);
-  files.sort((left, right) => left.relativePath.localeCompare(right.relativePath));
+  files.sort((left, right) =>
+    left.relativePath.localeCompare(right.relativePath),
+  );
   return files;
 }

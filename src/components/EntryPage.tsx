@@ -32,7 +32,11 @@ export function EntryPage({
             <p className="tags">{entity.tags.join(" · ")}</p>
           ) : null}
         </div>
-        <EntryBody html={entity.html} vaultPath={site.vaultPath} navigate={navigate} />
+        <EntryBody
+          html={entity.html}
+          vaultPath={site.vaultPath}
+          navigate={navigate}
+        />
       </article>
       <aside className="related">
         <section>

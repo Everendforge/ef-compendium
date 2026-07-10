@@ -1,5 +1,9 @@
 import { useEffect, useRef } from "react";
-import { isTauriRuntime, openExternal, vaultAssetDataUrl } from "../tauriBridge";
+import {
+  isTauriRuntime,
+  openExternal,
+  vaultAssetDataUrl,
+} from "../tauriBridge";
 import type { ReaderNavigation } from "./Reader";
 
 /**

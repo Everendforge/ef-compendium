@@ -10,5 +10,11 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["cli", "tests", "src/lib/node", "astro.config.mjs", "vite.config.ts"]
+  "include": [
+    "cli",
+    "tests",
+    "src/lib/node",
+    "astro.config.mjs",
+    "vite.config.ts"
+  ]
 }

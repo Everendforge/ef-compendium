@@ -46,8 +46,8 @@ export function TimelineView({
         <p className="chapter">Timeline</p>
         <h1>No dated entries yet.</h1>
         <p>
-          Add a <code>date:</code> (or <code>start:</code> / <code>end:</code>) field
-          to an entity's frontmatter to place it on the timeline.
+          Add a <code>date:</code> (or <code>start:</code> / <code>end:</code>)
+          field to an entity's frontmatter to place it on the timeline.
         </p>
       </section>
     );

@@ -48,7 +48,10 @@ function legacyStory(value: Json, id: string, name: string): Story {
   };
 }
 
-export function projectStories(files: SourceFile[], warnings: string[]): Story[] {
+export function projectStories(
+  files: SourceFile[],
+  warnings: string[],
+): Story[] {
   const byPath = new Map<string, string>();
   for (const file of files) {
     byPath.set(file.relativePath.replaceAll("\\", "/"), file.content);

@@ -21,7 +21,8 @@ export function assembleSiteData(
 ): SiteData {
   const config = parseConfig(
     files.find(
-      (file) => file.relativePath.replaceAll("\\", "/") === CONFIG_RELATIVE_PATH,
+      (file) =>
+        file.relativePath.replaceAll("\\", "/") === CONFIG_RELATIVE_PATH,
     )?.content,
   );
   const warnings: string[] = [];

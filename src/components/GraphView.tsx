@@ -62,7 +62,8 @@ export function buildGraph(site: SiteData) {
   };
 
   for (const entity of site.entities) {
-    for (const linked of entity.linkedIds) addLink(entity.id, linked, "wikilink");
+    for (const linked of entity.linkedIds)
+      addLink(entity.id, linked, "wikilink");
   }
   for (const story of site.stories) {
     for (const sequence of story.sequences) {
@@ -198,8 +199,10 @@ export function GraphView({
       const rect = canvas!.getBoundingClientRect();
       const width = rect.width;
       const height = rect.height;
-      const x = (event.clientX - rect.left - width / 2 - transform.x) / transform.k;
-      const y = (event.clientY - rect.top - height / 2 - transform.y) / transform.k;
+      const x =
+        (event.clientX - rect.left - width / 2 - transform.x) / transform.k;
+      const y =
+        (event.clientY - rect.top - height / 2 - transform.y) / transform.k;
       return { x, y };
     }
 

@@ -8,8 +8,8 @@ export function BookComingSoon() {
         <p className="chapter">Book mode</p>
         <h1>Coming soon</h1>
         <p>
-          A paginated, chapter-by-chapter edition of your universe is on its way.
-          Until then, the Web mode remains the full reading experience.
+          A paginated, chapter-by-chapter edition of your universe is on its
+          way. Until then, the Web mode remains the full reading experience.
         </p>
       </div>
     </div>

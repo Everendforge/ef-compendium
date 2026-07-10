@@ -26,7 +26,11 @@ export function EventPage({
           {event.description ? <p>{event.description}</p> : null}
         </div>
         {event.html ? (
-          <EntryBody html={event.html} vaultPath={site.vaultPath} navigate={navigate} />
+          <EntryBody
+            html={event.html}
+            vaultPath={site.vaultPath}
+            navigate={navigate}
+          />
         ) : null}
       </article>
       <aside className="related">

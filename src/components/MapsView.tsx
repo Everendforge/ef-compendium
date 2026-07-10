@@ -12,7 +12,9 @@ type MapDefinition = {
 };
 
 export function mapDefinitions(site: SiteData): MapDefinition[] {
-  const maps = site.entities.filter((entity) => stableSlug(entity.type) === "map");
+  const maps = site.entities.filter(
+    (entity) => stableSlug(entity.type) === "map",
+  );
   return maps.map((entity) => ({
     entity,
     imagePath: findMarkdownAssets(entity.body)[0],

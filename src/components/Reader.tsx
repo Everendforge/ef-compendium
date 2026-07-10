@@ -16,12 +16,14 @@ export type ReaderNavigation = (route: string) => void;
 
 export function orderedTypes(site: SiteData) {
   const order = site.config.navigation?.typeOrder ?? [];
-  return [...new Set(site.entities.map((entity) => entity.type))].sort((a, b) => {
-    return (
-      (order.indexOf(a) + 1 || 999) - (order.indexOf(b) + 1 || 999) ||
-      a.localeCompare(b)
-    );
-  });
+  return [...new Set(site.entities.map((entity) => entity.type))].sort(
+    (a, b) => {
+      return (
+        (order.indexOf(a) + 1 || 999) - (order.indexOf(b) + 1 || 999) ||
+        a.localeCompare(b)
+      );
+    },
+  );
 }
 
 function TocSidebar({
@@ -118,7 +120,7 @@ export function Reader({
   }
 
   let content: React.ReactNode;
-  if (route === "/" ) {
+  if (route === "/") {
     content = <CoverPage site={site} navigate={navigate} />;
   } else if (route === "/stories/") {
     content = <StoriesIndex site={site} navigate={navigate} />;
@@ -158,7 +160,11 @@ export function Reader({
             <section className="page-title">
               <p className="chapter">Not found</p>
               <h1>This page is not part of the published Compendium.</h1>
-              <button type="button" className="primary-action" onClick={refresh}>
+              <button
+                type="button"
+                className="primary-action"
+                onClick={refresh}
+              >
                 Reload universe
               </button>
             </section>
@@ -171,7 +177,9 @@ export function Reader({
   const fullBleed = route === "/graph/" || route === "/maps/";
   return (
     <div className={`reader-shell ${fullBleed ? "full-bleed" : ""}`}>
-      {!fullBleed ? <TocSidebar site={site} route={route} navigate={navigate} /> : null}
+      {!fullBleed ? (
+        <TocSidebar site={site} route={route} navigate={navigate} />
+      ) : null}
       <div className="reader-main">{content}</div>
     </div>
   );

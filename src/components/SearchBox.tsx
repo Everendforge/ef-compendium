@@ -38,7 +38,9 @@ export function SearchBox({
     const trimmed = query.trim().toLowerCase();
     if (!trimmed) return [];
     return entries
-      .filter((entry) => `${entry.name} ${entry.type}`.toLowerCase().includes(trimmed))
+      .filter((entry) =>
+        `${entry.name} ${entry.type}`.toLowerCase().includes(trimmed),
+      )
       .slice(0, 8);
   }, [entries, query]);
 

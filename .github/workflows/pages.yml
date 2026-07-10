@@ -23,7 +23,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - run: npm run build -- tests/fixtures/vault --out=dist-demo
+      - run: npm run site:build -- tests/fixtures/vault --out=dist-demo
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-demo

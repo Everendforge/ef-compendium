@@ -60,8 +60,9 @@ export function CoverPage({
         <p className="kicker">A world in reference</p>
         <h2>Every person, place, and story in one readable edition.</h2>
         <p>
-          This Compendium is generated from portable Markdown canon and editorial
-          story scenes. Follow links, explore related entries, or search the archive.
+          This Compendium is generated from portable Markdown canon and
+          editorial story scenes. Follow links, explore related entries, or
+          search the archive.
         </p>
       </section>
       <section className="directory">
@@ -77,7 +78,10 @@ export function CoverPage({
               >
                 <span>{type}</span>
                 <strong>
-                  {site.entities.filter((entity) => entity.type === type).length}
+                  {
+                    site.entities.filter((entity) => entity.type === type)
+                      .length
+                  }
                 </strong>
               </button>
             );

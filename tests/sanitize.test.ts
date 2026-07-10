@@ -11,9 +11,9 @@ const resolve = (target: string) =>
 
 const CASES = [
   "Plain paragraph with **bold** and [[Aster]].",
-  '<script>alert(1)</script> stays out, [link](https://example.com) stays in.',
+  "<script>alert(1)</script> stays out, [link](https://example.com) stays in.",
   '<img src="javascript:alert(1)"> and ![map](Maps/region.png)',
-  '[protocol relative](//evil.example) and [ftp](ftp://evil.example)',
+  "[protocol relative](//evil.example) and [ftp](ftp://evil.example)",
   "# Heading\n\n> Quote\n\n- item\n- item\n\n`code`",
 ];
 
