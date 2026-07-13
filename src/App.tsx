@@ -152,6 +152,12 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     [applySite],
   );
 
+  useEffect(() => {
+    const path = suiteChrome?.sharedUniversePath;
+    if (!path || site?.vaultPath === path) return;
+    void loadUniverse(path);
+  }, [loadUniverse, site?.vaultPath, suiteChrome?.sharedUniversePath]);
+
   const openUniverse = useCallback(async () => {
     if (!isTauriRuntime()) {
       setLoadState("error");
@@ -247,6 +253,19 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   }
 
   if (view === "home" || !site) {
+    if (suiteChrome?.sharedUniversePath) {
+      return (
+        <main className="suite-shared-world-loading" aria-busy={loadState === "loading"}>
+          <p>{loadState === "error" ? errorMessage : "Opening the shared world..."}</p>
+          {loadState === "error" ? (
+            <button type="button" onClick={suiteChrome.onHome}>
+              Choose another world
+            </button>
+          ) : null}
+        </main>
+      );
+    }
+
     return (
       <main className="home-shell">
         <header className="home-topbar">
@@ -375,34 +394,38 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   return (
     <main className="app-shell compendium-shell">
       <div className="reader-top-bar" aria-label="Reader controls">
-        <div ref={forgeMenuRef} className={`forge-corner-menu ${forgeMenuOpen ? "open" : ""}`}>
-          <div className="forge-orbit-panel" aria-label="Everend menu">
+        {suiteChrome ? (
+          suiteChrome.renderAppSwitcher()
+        ) : (
+          <div ref={forgeMenuRef} className={`forge-corner-menu ${forgeMenuOpen ? "open" : ""}`}>
+            <div className="forge-orbit-panel" aria-label="Everend menu">
+              <button
+                type="button"
+                onClick={() =>
+                  void openExternal(EVEREND_FORGE_GITHUB_URL).then(() => setForgeMenuOpen(false))
+                }
+              >
+                Github
+              </button>
+              <button
+                type="button"
+                onClick={() => void openExternal(BUY_SUITE_URL).then(() => setForgeMenuOpen(false))}
+              >
+                Buy Suite
+              </button>
+            </div>
             <button
               type="button"
-              onClick={() =>
-                void openExternal(EVEREND_FORGE_GITHUB_URL).then(() => setForgeMenuOpen(false))
-              }
+              className="forge-corner-button"
+              onClick={() => setForgeMenuOpen((open) => !open)}
+              aria-expanded={forgeMenuOpen}
+              aria-label="Open Everend menu"
+              title="Everend menu"
             >
-              Github
-            </button>
-            <button
-              type="button"
-              onClick={() => void openExternal(BUY_SUITE_URL).then(() => setForgeMenuOpen(false))}
-            >
-              Buy Suite
+              <ForgeCornerLogo />
             </button>
           </div>
-          <button
-            type="button"
-            className="forge-corner-button"
-            onClick={() => setForgeMenuOpen((open) => !open)}
-            aria-expanded={forgeMenuOpen}
-            aria-label="Open Everend menu"
-            title="Everend menu"
-          >
-            <ForgeCornerLogo />
-          </button>
-        </div>
+        )}
 
         <div className="reader-top-left">
           <button
