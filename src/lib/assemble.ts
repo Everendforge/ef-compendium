@@ -1,4 +1,4 @@
-import type { SiteData, SourceFile } from "../types.js";
+import type { SiteData, SourceFile, UniverseIcon, UniverseProfile } from "../types.js";
 import { CONFIG_RELATIVE_PATH, parseConfig } from "./config.js";
 import { renderMarkdownWith, type Sanitizer } from "./markdown.js";
 import { projectStories } from "./pathbranching.js";
@@ -7,6 +7,31 @@ import { entityLinkResolver, projectEntities } from "./vault.js";
 function vaultBaseName(vaultPath: string) {
   const trimmed = vaultPath.replaceAll("\\", "/").replace(/\/+$/, "");
   return trimmed.split("/").pop() || trimmed;
+}
+
+function parseUniverseProfile(files: SourceFile[]): UniverseProfile | undefined {
+  const profileFile = files.find(
+    (file) => file.relativePath.replaceAll("\\", "/") === ".everend/universe.json",
+  );
+  if (!profileFile) return undefined;
+
+  try {
+    const parsed = JSON.parse(profileFile.content) as UniverseProfile | null;
+    if (!parsed || typeof parsed !== "object") return undefined;
+    const icon: UniverseIcon | undefined =
+      parsed.icon?.type && parsed.icon.value
+        ? {
+            type: parsed.icon.type === "image" ? "image" : "preset",
+            value: String(parsed.icon.value),
+          }
+        : undefined;
+    return {
+      name: typeof parsed.name === "string" && parsed.name.trim() ? parsed.name.trim() : undefined,
+      icon,
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -25,6 +50,7 @@ export function assembleSiteData(
         file.relativePath.replaceAll("\\", "/") === CONFIG_RELATIVE_PATH,
     )?.content,
   );
+  const universeProfile = parseUniverseProfile(files);
   const warnings: string[] = [];
   const entities = projectEntities(
     files,
@@ -49,6 +75,7 @@ export function assembleSiteData(
   return {
     vaultPath,
     config,
+    universeProfile,
     title,
     description: config.site?.description ?? `A public guide to ${title}.`,
     entities,

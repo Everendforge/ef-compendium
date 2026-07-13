@@ -2,12 +2,18 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import {
   BookOpen,
+  Castle,
   ExternalLink,
+  FileWarning,
   FolderOpen,
+  Globe2,
   Home,
   Moon,
   Settings,
+  Sparkles,
   Sun,
+  Upload,
+  Wrench,
 } from "lucide-react";
 import compendiumIcon from "./assets/everend-compendium-icon.png";
 import forgeLogoOnDark from "./assets/everend-forge-logo-on-dark.png";
@@ -16,6 +22,9 @@ import { Reader, type ReaderMode } from "./components/Reader";
 import { mapDefinitions } from "./components/MapsView";
 import { SearchBox } from "./components/SearchBox";
 import { timelineEntries } from "./components/TimelineView";
+import { UniverseIconFrame } from "./components/UniverseIconFrame";
+import { CorrectionDialog } from "./components/CorrectionDialog";
+import { SettingsDialog, type SettingsSection } from "./components/SettingsDialog";
 import { assembleSiteData } from "./lib/assemble";
 import { sanitizeDom } from "./lib/sanitize-dom";
 import {
@@ -30,6 +39,7 @@ import {
   openExternal,
   openVaultDialog,
   revealVault,
+  saveUniverseTextFile,
 } from "./tauriBridge";
 import {
   isDarkTheme,
@@ -43,7 +53,7 @@ import {
   primaryFontCssValue,
   type PrimaryFontId,
 } from "./typography";
-import type { SiteData } from "./types";
+import type { Entity, SiteData, UniverseProfile } from "./types";
 import type { SuiteChrome } from "./suiteChrome";
 
 const EVEREND_FORGE_GITHUB_URL =
@@ -73,10 +83,79 @@ function ForgeCornerLogo() {
 
 type AppView = "home" | "reader";
 type LoadState = "idle" | "loading" | "error";
-type SettingsScope = "app" | "universe";
+type SettingsScope = "app" | "universe" | "about";
 
-function universeDisplayName(path: string) {
+function universePathName(path: string) {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
+}
+
+function universeDisplayName(site: SiteData) {
+  return site.universeProfile?.name ?? site.title;
+}
+
+function readImageFile(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result ?? ""));
+    reader.onerror = () => reject(new Error("Could not read image file."));
+    reader.readAsDataURL(file);
+  });
+}
+
+function UniverseProfileEditor({
+  site,
+  onSave,
+}: {
+  site: SiteData;
+  onSave: (profile: UniverseProfile) => Promise<void>;
+}) {
+  const [draft, setDraft] = useState<UniverseProfile>(() => ({
+    name: site.universeProfile?.name ?? site.title,
+    icon: site.universeProfile?.icon ?? { type: "preset", value: "book" },
+  }));
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setDraft({
+      name: site.universeProfile?.name ?? site.title,
+      icon: site.universeProfile?.icon ?? { type: "preset", value: "book" },
+    });
+  }, [site]);
+
+  return (
+    <div className="universe-profile-editor">
+      <UniverseIconFrame profile={draft} size={48} />
+      <div className="universe-profile-fields">
+        <label>
+          <span>Universe name</span>
+          <input
+            value={draft.name ?? ""}
+            onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+            placeholder={site.title}
+          />
+        </label>
+        <div className="icon-preset-row">
+          {[["book", BookOpen], ["globe", Globe2], ["castle", Castle], ["sparkles", Sparkles]].map(([value, Icon]) => (
+            <button key={value as string} type="button" className={draft.icon?.type === "preset" && draft.icon.value === value ? "active" : ""} onClick={() => setDraft((current) => ({ ...current, icon: { type: "preset", value: value as string } }))} title={`Use ${value} icon`}>
+              <Icon size={16} />
+            </button>
+          ))}
+          <label className="image-upload-button" title="Use PNG or JPG">
+            <Upload size={16} />
+            <input type="file" accept="image/png,image/jpeg" onChange={async (event) => {
+              const file = event.target.files?.[0];
+              if (!file) return;
+              const value = await readImageFile(file);
+              setDraft((current) => ({ ...current, icon: { type: "image", value } }));
+            }} />
+          </label>
+        </div>
+        <button type="button" onClick={async () => { setSaving(true); try { await onSave(draft); } finally { setSaving(false); } }} disabled={saving}>
+          Save customization
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function TypographySettings({
@@ -116,6 +195,8 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   const [forgeMenuOpen, setForgeMenuOpen] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsScope, setSettingsScope] = useState<SettingsScope>("app");
+  const [showDiagnostics, setShowDiagnostics] = useState(false);
+  const [correctionEntity, setCorrectionEntity] = useState<Entity>();
   const forgeMenuRef = useRef<HTMLDivElement | null>(null);
   const appliedPresetRef = useRef<string | undefined>(undefined);
 
@@ -139,6 +220,17 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     document.addEventListener("pointerdown", handlePointerDown);
     return () => document.removeEventListener("pointerdown", handlePointerDown);
   }, [forgeMenuOpen]);
+
+  useEffect(() => {
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key !== "Escape") return;
+      setShowSettings(false);
+      setShowDiagnostics(false);
+      setCorrectionEntity(undefined);
+    }
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, []);
 
   const navigate = useCallback((nextRoute: string) => {
     setRoute(nextRoute);
@@ -209,6 +301,9 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     }));
   }, [suiteChrome?.suiteSettings]);
 
+  const activeTheme = (suiteChrome?.suiteSettings?.style ?? settings.theme) as ThemeId;
+  const activeThemeIsDark = isDarkTheme(activeTheme);
+
   const effectivePrimaryFont = (suiteChrome?.suiteSettings?.primaryFont ??
     settings.primaryFont) as PrimaryFontId;
   const setPrimaryFont = useCallback(
@@ -230,6 +325,28 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     setSettingsScope(scope);
     setShowSettings(true);
   }, []);
+
+  const settingsSection: SettingsSection =
+    settingsScope === "universe" ? "universe" : settingsScope === "about" ? "about" : "appearance";
+
+  const changeSettingsSection = useCallback((section: SettingsSection) => {
+    setSettingsScope(section === "appearance" ? "app" : section);
+  }, []);
+
+  const saveUniverseProfile = useCallback(async (profile: UniverseProfile) => {
+    if (!site) return;
+    const normalizedProfile: UniverseProfile = {
+      name: profile.name?.trim() || undefined,
+      icon: profile.icon,
+    };
+    const result = await saveUniverseTextFile(
+      site.vaultPath,
+      ".everend/universe.json",
+      `${JSON.stringify(normalizedProfile, null, 2)}\n`,
+    );
+    if (!result.ok) throw new Error(result.message ?? "Could not save universe profile.");
+    setSite((current) => current ? { ...current, universeProfile: normalizedProfile } : current);
+  }, [site]);
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -312,7 +429,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
               onClick={toggleTheme}
               title="Toggle theme"
             >
-              {isDarkTheme(settings.theme) ? (
+              {activeThemeIsDark ? (
                 <Sun size={16} />
               ) : (
                 <Moon size={16} />
@@ -321,61 +438,16 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
           </div>
         </header>
         {showSettings ? (
-          <div className="settings-popover home-settings-popover">
-            <p className="settings-category">
-              {settingsScope === "universe"
-                ? "Universe"
-                : suiteChrome
-                  ? "Forge"
-                  : "Application"}
-            </p>
-            <strong className="settings-tab">
-              {settingsScope === "universe"
-                ? "Current universe"
-                : suiteChrome
-                  ? "Suite"
-                  : "Typography"}
-            </strong>
-            {settingsScope === "universe" && site ? (
-              <div className="universe-settings-summary">
-                <span>{site.title}</span>
-                <small>{site.vaultPath}</small>
-                <button
-                  type="button"
-                  onClick={() => void revealVault(site.vaultPath)}
-                >
-                  Show in Finder
-                </button>
-              </div>
-            ) : null}
-            {settingsScope === "app" ? (
-              <label className="typography-setting">
-                <span>Style</span>
-                <select
-                  value={suiteChrome?.suiteSettings?.style ?? settings.theme}
-                  onChange={(event) => {
-                    if (suiteChrome?.suiteSettings)
-                      suiteChrome.suiteSettings.onStyleChange(
-                        event.target.value,
-                      );
-                    else setStandaloneStyle(event.target.value as ThemeId);
-                  }}
-                >
-                  {THEMES.map((theme) => (
-                    <option key={theme.id} value={theme.id}>
-                      {theme.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            ) : null}
-            {settingsScope === "app" ? (
-              <TypographySettings
-                value={effectivePrimaryFont}
-                onChange={setPrimaryFont}
-              />
-            ) : null}
-          </div>
+          <SettingsDialog
+            section={settingsSection === "universe" ? "appearance" : settingsSection}
+            onSectionChange={changeSettingsSection}
+            onClose={() => setShowSettings(false)}
+            onOpenDocs={() => void openExternal(COMPENDIUM_DOCS_URL)}
+            appearance={<>
+              <label className="typography-setting"><span>Style</span><select value={suiteChrome?.suiteSettings?.style ?? settings.theme} onChange={(event) => suiteChrome?.suiteSettings ? suiteChrome.suiteSettings.onStyleChange(event.target.value) : setStandaloneStyle(event.target.value as ThemeId)}>{THEMES.map((theme) => <option key={theme.id} value={theme.id}>{theme.label}</option>)}</select></label>
+              <TypographySettings value={effectivePrimaryFont} onChange={setPrimaryFont} />
+            </>}
+          />
         ) : null}
         <section className="home-panel">
           <div className="home-hero">
@@ -394,7 +466,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
                 onClick={() => setView("reader")}
               >
                 <span className="eyebrow">Continue reading</span>
-                <strong>{site.title}</strong>
+                <strong>{universeDisplayName(site)}</strong>
                 <span>
                   {site.entities.length} entries · {site.stories.length} stories
                 </span>
@@ -433,7 +505,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
                       type="button"
                       onClick={() => void openRecentUniverse(path)}
                     >
-                      <strong>{universeDisplayName(path)}</strong>
+                      <strong>{universePathName(path)}</strong>
                       <span>{path}</span>
                     </button>
                   </li>
@@ -452,43 +524,52 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   return (
     <main className="app-shell compendium-shell">
       <div className="reader-top-bar" aria-label="Reader controls">
-        <div
-          ref={forgeMenuRef}
-          className={`forge-corner-menu ${forgeMenuOpen ? "open" : ""}`}
-        >
-          <div className="forge-orbit-panel" aria-label="Everend menu">
+        {suiteChrome ? (
+          suiteChrome.renderAppSwitcher()
+        ) : (
+          <div
+            ref={forgeMenuRef}
+            className={`forge-corner-menu ${forgeMenuOpen ? "open" : ""}`}
+          >
+            <div className="forge-orbit-panel" aria-label="Everend menu">
+              <button type="button" onClick={() => { setView("home"); setForgeMenuOpen(false); }}>Compendium Home</button>
+              <button type="button" onClick={() => { void openUniverse(); setForgeMenuOpen(false); }}>Open Universe…</button>
+              <button type="button" onClick={() => { openSettings("app"); setForgeMenuOpen(false); }}>Settings…</button>
+              <span className="forge-menu-separator" />
+              <button
+                type="button"
+                onClick={() =>
+                  void openExternal(EVEREND_FORGE_GITHUB_URL).then(() =>
+                    setForgeMenuOpen(false),
+                  )
+                }
+              >
+                GitHub
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  void openExternal(BUY_SUITE_URL).then(() =>
+                    setForgeMenuOpen(false),
+                  )
+                }
+              >
+                Buy Suite
+              </button>
+              <button type="button" onClick={() => { openSettings("about"); setForgeMenuOpen(false); }}>About Compendium</button>
+            </div>
             <button
               type="button"
-              onClick={() =>
-                void openExternal(EVEREND_FORGE_GITHUB_URL).then(() =>
-                  setForgeMenuOpen(false),
-                )
-              }
+              className="forge-corner-button"
+              onClick={() => setForgeMenuOpen((open) => !open)}
+              aria-expanded={forgeMenuOpen}
+              aria-label="Open Everend menu"
+              title="Everend menu"
             >
-              Github
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                void openExternal(BUY_SUITE_URL).then(() =>
-                  setForgeMenuOpen(false),
-                )
-              }
-            >
-              Buy Suite
+              <ForgeCornerLogo />
             </button>
           </div>
-          <button
-            type="button"
-            className="forge-corner-button"
-            onClick={() => setForgeMenuOpen((open) => !open)}
-            aria-expanded={forgeMenuOpen}
-            aria-label="Open Everend menu"
-            title="Everend menu"
-          >
-            <ForgeCornerLogo />
-          </button>
-        </div>
+        )}
 
         <div className="reader-top-left">
           <button
@@ -506,10 +587,10 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             onClick={() => openSettings("universe")}
             title={site.vaultPath}
           >
-            <BookOpen size={28} />
+            <UniverseIconFrame profile={site.universeProfile} />
             <span className="reader-universe-copy">
-              <strong>{site.title}</strong>
-              <span>{universeDisplayName(site.vaultPath)}</span>
+              <strong>{universeDisplayName(site)}</strong>
+              <span>{universePathName(site.vaultPath)}</span>
             </span>
           </button>
           <button
@@ -603,6 +684,16 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
           <SearchBox site={site} navigate={navigate} />
           <button
             type="button"
+            className={`reader-icon-button ${site.warnings.length ? "has-warning" : ""}`}
+            onClick={() => setShowDiagnostics((open) => !open)}
+            aria-expanded={showDiagnostics}
+            title={`Diagnostics${site.warnings.length ? ` (${site.warnings.length})` : ""}`}
+          >
+            <FileWarning size={15} />
+            {site.warnings.length ? <span className="warning-count">{site.warnings.length}</span> : null}
+          </button>
+          <button
+            type="button"
             className="reader-icon-button"
             onClick={() => openSettings("app")}
             aria-expanded={showSettings}
@@ -616,7 +707,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             onClick={toggleTheme}
             title="Toggle theme"
           >
-            {isDarkTheme(settings.theme) ? (
+            {activeThemeIsDark ? (
               <Sun size={15} />
             ) : (
               <Moon size={15} />
@@ -626,59 +717,26 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
       </div>
 
       {showSettings ? (
-        <div className="settings-popover reader-settings-popover">
-          <p className="settings-category">
-            {settingsScope === "universe"
-              ? "Universe"
-              : suiteChrome
-                ? "Forge"
-                : "Application"}
-          </p>
-          <strong className="settings-tab">
-            {settingsScope === "universe"
-              ? "Current universe"
-              : suiteChrome
-                ? "Suite"
-                : "Typography"}
-          </strong>
-          {settingsScope === "universe" ? (
-            <div className="universe-settings-summary">
-              <span>{site.title}</span>
-              <small>{site.vaultPath}</small>
-              <button
-                type="button"
-                onClick={() => void revealVault(site.vaultPath)}
-              >
-                Show in Finder
-              </button>
-            </div>
-          ) : null}
-          {settingsScope === "app" ? (
-            <label className="typography-setting">
-              <span>Style</span>
-              <select
-                value={suiteChrome?.suiteSettings?.style ?? settings.theme}
-                onChange={(event) => {
-                  if (suiteChrome?.suiteSettings)
-                    suiteChrome.suiteSettings.onStyleChange(event.target.value);
-                  else setStandaloneStyle(event.target.value as ThemeId);
-                }}
-              >
-                {THEMES.map((theme) => (
-                  <option key={theme.id} value={theme.id}>
-                    {theme.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
-          {settingsScope === "app" ? (
-            <TypographySettings
-              value={effectivePrimaryFont}
-              onChange={setPrimaryFont}
-            />
-          ) : null}
-        </div>
+        <SettingsDialog
+          section={settingsSection}
+          onSectionChange={changeSettingsSection}
+          onClose={() => setShowSettings(false)}
+          onOpenDocs={() => void openExternal(COMPENDIUM_DOCS_URL)}
+          appearance={<>
+            <label className="typography-setting"><span>Style</span><select value={suiteChrome?.suiteSettings?.style ?? settings.theme} onChange={(event) => suiteChrome?.suiteSettings ? suiteChrome.suiteSettings.onStyleChange(event.target.value) : setStandaloneStyle(event.target.value as ThemeId)}>{THEMES.map((theme) => <option key={theme.id} value={theme.id}>{theme.label}</option>)}</select></label>
+            <TypographySettings value={effectivePrimaryFont} onChange={setPrimaryFont} />
+          </>}
+          universe={<div className="universe-settings-summary"><UniverseProfileEditor site={site} onSave={saveUniverseProfile} /><small>{site.vaultPath}</small><button type="button" onClick={() => void revealVault(site.vaultPath)}>Show in Explorer</button></div>}
+        />
+      ) : null}
+
+      {showDiagnostics ? (
+        <aside className="diagnostics-drawer" aria-label="Universe diagnostics">
+          <header><div><span>Publication health</span><h2>Diagnostics</h2></div><button type="button" onClick={() => setShowDiagnostics(false)}>×</button></header>
+          <div className={`diagnostics-summary ${site.warnings.length ? "warning" : "clean"}`}><Wrench size={18} /><div><strong>{site.warnings.length ? `${site.warnings.length} issue${site.warnings.length === 1 ? "" : "s"} to review` : "Everything reads cleanly"}</strong><p>Compendium reports problems without changing source files.</p></div></div>
+          {site.warnings.length ? <ul>{site.warnings.map((warning, index) => <li key={`${warning}-${index}`}><FileWarning size={15} /><span>{warning}</span></li>)}</ul> : null}
+          <footer><p>Found a factual or writing error while reading?</p><button type="button" disabled={!site.entities.find((entity) => entity.route === route)} onClick={() => setCorrectionEntity(site.entities.find((entity) => entity.route === route))}>Suggest correction to this entry</button></footer>
+        </aside>
       ) : null}
 
       {loadState === "error" && errorMessage ? (
@@ -691,7 +749,9 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
         route={route}
         navigate={navigate}
         refresh={() => void readCurrentUniverse()}
+        onSuggestCorrection={setCorrectionEntity}
       />
+      {correctionEntity ? <CorrectionDialog site={site} entity={correctionEntity} onClose={() => setCorrectionEntity(undefined)} /> : null}
     </main>
   );
 }

@@ -108,12 +108,14 @@ export function Reader({
   route,
   navigate,
   refresh,
+  onSuggestCorrection,
 }: {
   site: SiteData;
   mode: ReaderMode;
   route: string;
   navigate: ReaderNavigation;
   refresh: () => void;
+  onSuggestCorrection?: (entity: Entity) => void;
 }) {
   if (mode === "book") {
     return <BookComingSoon />;
@@ -133,7 +135,14 @@ export function Reader({
   } else {
     const entity = findEntity(site, route);
     if (entity) {
-      content = <EntryPage site={site} entity={entity} navigate={navigate} />;
+      content = (
+        <EntryPage
+          site={site}
+          entity={entity}
+          navigate={navigate}
+          onSuggestCorrection={onSuggestCorrection}
+        />
+      );
     } else {
       const story = site.stories.find((candidate) => candidate.route === route);
       if (story) {

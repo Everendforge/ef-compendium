@@ -310,6 +310,30 @@ fn reveal_vault(vault_path: String) -> Result<bool, String> {
     Ok(true)
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct WriteResult {
+    ok: bool,
+    message: Option<String>,
+}
+
+#[tauri::command]
+fn save_universe_text_file(
+    universe_path: String,
+    relative_path: String,
+    content: String,
+) -> Result<WriteResult, String> {
+    let (_root, path) = resolve_vault_path(&universe_path, &relative_path)?;
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).map_err(|error| error.to_string())?;
+    }
+    fs::write(path, content).map_err(|error| error.to_string())?;
+    Ok(WriteResult {
+        ok: true,
+        message: None,
+    })
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -328,7 +352,8 @@ pub fn run() {
             index_vault,
             path_exists,
             read_file_base64,
-            reveal_vault
+            reveal_vault,
+            save_universe_text_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

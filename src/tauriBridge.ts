@@ -29,6 +29,18 @@ export function revealVault(vaultPath: string) {
   return invoke<boolean>("reveal_vault", { vaultPath });
 }
 
+export function saveUniverseTextFile(
+  universePath: string,
+  relativePath: string,
+  content: string,
+) {
+  return invoke<{ ok: boolean; message?: string }>("save_universe_text_file", {
+    universePath,
+    relativePath,
+    content,
+  });
+}
+
 export function openExternal(url: string) {
   if (isTauriRuntime()) return openUrl(url);
   window.open(url, "_blank", "noopener,noreferrer");

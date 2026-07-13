@@ -1,3 +1,4 @@
+import { PencilLine } from "lucide-react";
 import type { Entity, SiteData } from "../types";
 import { EntryBody } from "./EntryBody";
 import type { ReaderNavigation } from "./Reader";
@@ -6,10 +7,12 @@ export function EntryPage({
   site,
   entity,
   navigate,
+  onSuggestCorrection,
 }: {
   site: SiteData;
   entity: Entity;
   navigate: ReaderNavigation;
+  onSuggestCorrection?: (entity: Entity) => void;
 }) {
   const related = entity.backlinks
     .map((id) => site.entities.find((candidate) => candidate.id === id))
@@ -26,7 +29,18 @@ export function EntryPage({
     <div className="entry-layout">
       <article className="entry">
         <div className="entry-heading">
-          <p className="chapter">{entity.type}</p>
+          <div className="entry-heading-meta">
+            <p className="chapter">{entity.type}</p>
+            {onSuggestCorrection ? (
+              <button
+                type="button"
+                className="suggest-correction-button"
+                onClick={() => onSuggestCorrection(entity)}
+              >
+                <PencilLine size={14} /> Suggest correction
+              </button>
+            ) : null}
+          </div>
           <h1>{entity.name}</h1>
           {entity.tags.length > 0 ? (
             <p className="tags">{entity.tags.join(" · ")}</p>

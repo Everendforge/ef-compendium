@@ -121,6 +121,8 @@ export function projectEntities(
       backlinks: [],
       route: entityRoute(type, id),
       html: "",
+      sourceContent: file.content,
+      modifiedMs: file.modifiedMs,
       date: asOptionalString(parsed.frontmatter.date),
       start: asOptionalString(parsed.frontmatter.start),
       end: asOptionalString(parsed.frontmatter.end),

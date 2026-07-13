@@ -14,10 +14,21 @@ export type CompendiumConfig = {
   narrative?: { mode?: "scenes-and-relations" };
 };
 
+export type UniverseIcon = {
+  type: "preset" | "image";
+  value: string;
+};
+
+export type UniverseProfile = {
+  name?: string;
+  icon?: UniverseIcon;
+};
+
 /** A vault file already read into memory (from Node fs or the Tauri backend). */
 export type SourceFile = {
   relativePath: string;
   content: string;
+  modifiedMs?: number;
 };
 
 export type Entity = {
@@ -37,6 +48,9 @@ export type Entity = {
   backlinks: string[];
   route: string;
   html: string;
+  /** Original Markdown snapshot used by reviewable correction proposals. */
+  sourceContent: string;
+  modifiedMs?: number;
   /** Optional timeline convention: a single date or a start/end range. */
   date?: string;
   start?: string;
@@ -65,6 +79,7 @@ export type Story = {
 export type SiteData = {
   vaultPath: string;
   config: CompendiumConfig;
+  universeProfile?: UniverseProfile;
   title: string;
   description: string;
   entities: Entity[];
