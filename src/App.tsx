@@ -270,6 +270,12 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     [applySite],
   );
 
+  useEffect(() => {
+    const path = suiteChrome?.sharedUniversePath;
+    if (!path || site?.vaultPath === path) return;
+    void loadUniverse(path);
+  }, [loadUniverse, site?.vaultPath, suiteChrome?.sharedUniversePath]);
+
   const openUniverse = useCallback(async () => {
     if (!isTauriRuntime()) {
       setLoadState("error");
@@ -398,6 +404,19 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   }
 
   if (view === "home" || !site) {
+    if (suiteChrome?.sharedUniversePath) {
+      return (
+        <main className="suite-shared-world-loading" aria-busy={loadState === "loading"}>
+          <p>{loadState === "error" ? errorMessage : "Opening the shared world..."}</p>
+          {loadState === "error" ? (
+            <button type="button" onClick={suiteChrome.onHome}>
+              Choose another world
+            </button>
+          ) : null}
+        </main>
+      );
+    }
+
     return (
       <main className="home-shell">
         <header className="home-topbar">
