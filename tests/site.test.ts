@@ -11,6 +11,7 @@ const fixture = path.resolve("tests/fixtures/vault");
 describe("Compendium source projection", () => {
   it("publishes only canon entities and resolves wikilinks/backlinks", () => {
     const site = loadSite(fixture);
+    expect(site.availableStatuses).toEqual(["canon", "draft"]);
     expect(site.entities.map((entity) => entity.id)).toEqual([
       "character:aster",
       "location:northwatch",

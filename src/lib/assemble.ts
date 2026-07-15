@@ -2,7 +2,11 @@ import type { SiteData, SourceFile, UniverseIcon, UniverseProfile } from "../typ
 import { CONFIG_RELATIVE_PATH, parseConfig } from "./config.js";
 import { renderMarkdownWith, type Sanitizer } from "./markdown.js";
 import { projectStories } from "./pathbranching.js";
-import { entityLinkResolver, projectEntities } from "./vault.js";
+import {
+  discoverEntityStatuses,
+  entityLinkResolver,
+  projectEntities,
+} from "./vault.js";
 
 function vaultBaseName(vaultPath: string) {
   const trimmed = vaultPath.replaceAll("\\", "/").replace(/\/+$/, "");
@@ -51,6 +55,7 @@ export function assembleSiteData(
     )?.content,
   );
   const universeProfile = parseUniverseProfile(files);
+  const availableStatuses = discoverEntityStatuses(files);
   const warnings: string[] = [];
   const entities = projectEntities(
     files,
@@ -79,6 +84,7 @@ export function assembleSiteData(
     title,
     description: config.site?.description ?? `A public guide to ${title}.`,
     entities,
+    availableStatuses,
     stories,
     warnings,
   };

@@ -361,6 +361,20 @@ body {
   color: var(--cp-text);
 }
 
+.publication-settings { display: grid; gap: 13px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--cp-border-soft); }
+.settings-section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.settings-section-heading h4 { margin: 0 0 4px; color: var(--cp-heading); font-size: 15px; }
+.settings-section-heading p { margin: 0; color: var(--cp-muted); font-size: 12px; line-height: 1.45; }
+.settings-section-heading > span { flex: 0 0 auto; color: var(--cp-accent); font-size: 11px; font-weight: 700; }
+.publication-status-list { display: grid; gap: 7px; }
+.publication-status-option { display: flex; align-items: flex-start; gap: 9px; padding: 10px; border: 1px solid var(--cp-border-soft); border-radius: 8px; background: color-mix(in srgb, var(--cp-panel-2) 55%, transparent); cursor: pointer; }
+.publication-status-option input { margin-top: 2px; accent-color: var(--cp-accent); }
+.publication-status-option span { display: grid; gap: 3px; }
+.publication-status-option strong { color: var(--cp-text); font-size: 13px; }
+.publication-status-option small { color: var(--cp-muted); font-size: 11px; line-height: 1.4; }
+.publication-settings-note { margin: 0; color: var(--cp-muted); font-size: 11px; line-height: 1.45; }
+.publication-save-button { justify-self: start; padding: 8px 11px; font-size: 12px; }
+
 .brand {
   display: flex;
   align-items: center;

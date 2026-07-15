@@ -26,6 +26,7 @@ import { UniverseIconFrame } from "./components/UniverseIconFrame";
 import { CorrectionDialog } from "./components/CorrectionDialog";
 import { SettingsDialog, type SettingsSection } from "./components/SettingsDialog";
 import { assembleSiteData } from "./lib/assemble";
+import { serializeConfig } from "./lib/config";
 import { sanitizeDom } from "./lib/sanitize-dom";
 import {
   loadSettings,
@@ -182,6 +183,84 @@ function TypographySettings({
   );
 }
 
+function statusLabel(status: string) {
+  return status
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function PublicationSettings({
+  site,
+  onSave,
+}: {
+  site: SiteData;
+  onSave: (statuses: string[]) => Promise<void>;
+}) {
+  const configuredStatuses = site.config.publication?.statuses ?? ["canon"];
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(configuredStatuses);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setSelectedStatuses(site.config.publication?.statuses ?? ["canon"]);
+  }, [site]);
+
+  const statuses = [...new Set(["canon", ...site.availableStatuses, ...selectedStatuses])];
+
+  return (
+    <section className="publication-settings">
+      <div className="settings-section-heading">
+        <div>
+          <h4>Published content</h4>
+          <p>Choose which frontmatter statuses are visible in this Compendium.</p>
+        </div>
+        <span>{site.entities.length} visible</span>
+      </div>
+      <div className="publication-status-list">
+        {statuses.map((status) => (
+          <label className="publication-status-option" key={status}>
+            <input
+              type="checkbox"
+              checked={selectedStatuses.includes(status)}
+              onChange={(event) => {
+                setSelectedStatuses((current) =>
+                  event.target.checked
+                    ? [...current, status]
+                    : current.filter((value) => value !== status),
+                );
+              }}
+            />
+            <span>
+              <strong>{statusLabel(status)}</strong>
+              {status === "canon" ? (
+                <small>All entries marked as canon are included.</small>
+              ) : null}
+            </span>
+          </label>
+        ))}
+      </div>
+      <p className="publication-settings-note">
+        Canon is selected by default. Unchecking it hides every canonical entry.
+      </p>
+      <button
+        type="button"
+        className="primary-action publication-save-button"
+        disabled={saving || selectedStatuses.length === 0}
+        onClick={async () => {
+          setSaving(true);
+          try {
+            await onSave(selectedStatuses);
+          } finally {
+            setSaving(false);
+          }
+        }}
+      >
+        {saving ? "Saving…" : "Save publication settings"}
+      </button>
+    </section>
+  );
+}
 function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   const [settings, setSettings] = useState<CompendiumSettings>(() =>
     loadSettings(),
@@ -199,6 +278,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   const [correctionEntity, setCorrectionEntity] = useState<Entity>();
   const forgeMenuRef = useRef<HTMLDivElement | null>(null);
   const appliedPresetRef = useRef<string | undefined>(undefined);
+  const recentUniverseAttemptedRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     document.documentElement.dataset.theme =
@@ -275,6 +355,27 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     if (!path || site?.vaultPath === path) return;
     void loadUniverse(path);
   }, [loadUniverse, site?.vaultPath, suiteChrome?.sharedUniversePath]);
+
+  useEffect(() => {
+    if (
+      !isTauriRuntime() ||
+      suiteChrome?.sharedUniversePath ||
+      site ||
+      loadState !== "idle"
+    ) {
+      return;
+    }
+    const path = settings.recentUniverse;
+    if (!path || recentUniverseAttemptedRef.current === path) return;
+    recentUniverseAttemptedRef.current = path;
+    void loadUniverse(path);
+  }, [
+    loadState,
+    loadUniverse,
+    settings.recentUniverse,
+    site?.vaultPath,
+    suiteChrome?.sharedUniversePath,
+  ]);
 
   const openUniverse = useCallback(async () => {
     if (!isTauriRuntime()) {
@@ -353,6 +454,21 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     if (!result.ok) throw new Error(result.message ?? "Could not save universe profile.");
     setSite((current) => current ? { ...current, universeProfile: normalizedProfile } : current);
   }, [site]);
+
+  const savePublicationStatuses = useCallback(async (statuses: string[]) => {
+    if (!site) return;
+    const nextConfig = {
+      ...site.config,
+      publication: { ...site.config.publication, statuses },
+    };
+    const result = await saveUniverseTextFile(
+      site.vaultPath,
+      ".everend/compendium.yaml",
+      serializeConfig(nextConfig),
+    );
+    if (!result.ok) throw new Error(result.message ?? "Could not save publication settings.");
+    await loadUniverse(site.vaultPath);
+  }, [loadUniverse, site]);
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -745,7 +861,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             <label className="typography-setting"><span>Style</span><select value={suiteChrome?.suiteSettings?.style ?? settings.theme} onChange={(event) => suiteChrome?.suiteSettings ? suiteChrome.suiteSettings.onStyleChange(event.target.value) : setStandaloneStyle(event.target.value as ThemeId)}>{THEMES.map((theme) => <option key={theme.id} value={theme.id}>{theme.label}</option>)}</select></label>
             <TypographySettings value={effectivePrimaryFont} onChange={setPrimaryFont} />
           </>}
-          universe={<div className="universe-settings-summary"><UniverseProfileEditor site={site} onSave={saveUniverseProfile} /><small>{site.vaultPath}</small><button type="button" onClick={() => void revealVault(site.vaultPath)}>Show in Explorer</button></div>}
+          universe={<div className="universe-settings-summary"><UniverseProfileEditor site={site} onSave={saveUniverseProfile} /><PublicationSettings site={site} onSave={savePublicationStatuses} /><small>{site.vaultPath}</small><button type="button" onClick={() => void revealVault(site.vaultPath)}>Show in Explorer</button></div>}
         />
       ) : null}
 

@@ -33,6 +33,10 @@ export function parseConfig(
   };
 }
 
+export function serializeConfig(config: CompendiumConfig) {
+  return YAML.stringify(config);
+}
+
 export const starterConfig = [
   'specVersion: "0.1"',
   "site:",

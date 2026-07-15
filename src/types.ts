@@ -83,6 +83,8 @@ export type SiteData = {
   title: string;
   description: string;
   entities: Entity[];
+  /** Status values found in entity frontmatter, including unpublished entries. */
+  availableStatuses: string[];
   stories: Story[];
   warnings: string[];
 };

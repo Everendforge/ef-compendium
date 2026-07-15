@@ -69,6 +69,19 @@ function isEntityDocument(relativePath: string) {
   return true;
 }
 
+/** Returns status values from valid entity documents, whether published or not. */
+export function discoverEntityStatuses(files: SourceFile[]) {
+  const statuses = new Set<string>();
+  for (const file of files) {
+    const relativePath = file.relativePath.replaceAll("\\", "/");
+    if (!isEntityDocument(relativePath)) continue;
+    const parsed = parseDocument(file.content);
+    const status = parsed?.frontmatter.status;
+    if (typeof status === "string" && status.trim()) statuses.add(status.trim());
+  }
+  return [...statuses].sort((left, right) => left.localeCompare(right));
+}
+
 export function projectEntities(
   files: SourceFile[],
   publishedStatuses: string[],
