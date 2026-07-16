@@ -33,6 +33,13 @@ describe("Compendium source projection", () => {
     expect(site.stories[1].sequences[0].events[0].name).toBe("Legacy scene");
   });
 
+  it("projects PathBranching event cover assets without executable state", () => {
+    const site = loadSite(fixture);
+    const event = site.stories[0].sequences[0].events[0];
+    expect(event.coverImage).toBe(".everend/assets/image/arrival.png");
+    expect(JSON.stringify(event)).not.toContain("decisions");
+  });
+
   it("removes unsafe HTML while retaining resolved internal links", () => {
     const html = renderMarkdown("<script>alert(1)</script> [[Aster]]", () => ({
       route: "/character/character-aster/",

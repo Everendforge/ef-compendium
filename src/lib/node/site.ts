@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import type { SiteData } from "../../types.js";
 import { assembleSiteData } from "../assemble.js";
+import { resolveVaultAssetPath } from "../assets.js";
 import { CONFIG_RELATIVE_PATH } from "../config.js";
 import { findMarkdownAssets } from "../markdown.js";
 import { isSafeVaultPath } from "../paths.js";
@@ -37,7 +38,19 @@ export function copyReferencedAssets(data: SiteData, outputPath: string) {
     [
       data.config.site?.coverImage,
       data.config.site?.logo,
-      ...data.entities.flatMap((entity) => findMarkdownAssets(entity.body)),
+      ...data.entities.flatMap((entity) => [
+        entity.presentation?.portrait,
+        entity.presentation?.cover,
+        ...findMarkdownAssets(entity.body).map((asset) =>
+          resolveVaultAssetPath(data.assetPaths, entity.path, asset),
+        ),
+      ]),
+      ...data.stories.flatMap((story) =>
+        story.sequences.flatMap((sequence) => [
+          ...sequence.events.map((event) => event.coverImage),
+          ...sequence.events.flatMap((event) => event.images ?? []),
+        ]),
+      ),
     ].filter((value): value is string => Boolean(value)),
   );
   for (const asset of assets) {

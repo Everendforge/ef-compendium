@@ -1,4 +1,5 @@
 import { marked } from "marked";
+import { isExternalAssetPath } from "./assets.js";
 import { isSafeVaultPath } from "./paths.js";
 
 /** Sanitizes rendered HTML down to the Compendium allowlist. */
@@ -7,6 +8,8 @@ export type Sanitizer = (html: string) => string;
 export type LinkResolver = (
   target: string,
 ) => { route: string; label: string } | undefined;
+
+export type AssetResolver = (asset: string) => string | undefined;
 
 export const ALLOWED_TAGS = [
   "a",
@@ -46,18 +49,23 @@ export function findMarkdownAssets(body: string) {
   return Array.from(
     body.matchAll(/!\[[^\]]*\]\(([^\s)]+)(?:\s+[^)]*)?\)/g),
     (match) => match[1],
-  ).filter(isSafeVaultPath);
+  ).filter((asset) => isSafeVaultPath(asset) && !isExternalAssetPath(asset));
 }
 
 export function renderMarkdownWith(
   body: string,
   resolveLink: LinkResolver,
   sanitize: Sanitizer,
+  resolveAsset?: AssetResolver,
 ) {
   const withAssets = body.replace(
     /!\[([^\]]*)\]\(([^\s)]+)(?:\s+[^)]*)?\)/g,
     (full, alt: string, asset: string) => {
-      return isSafeVaultPath(asset) ? `![${alt}](/assets/${asset})` : full;
+      if (isExternalAssetPath(asset)) return full;
+      const resolved = resolveAsset?.(asset) ?? asset;
+      return isSafeVaultPath(resolved)
+        ? `![${alt}](/assets/${resolved})`
+        : full;
     },
   );
   const linked = withAssets.replace(
