@@ -15,6 +15,7 @@ struct VaultFile {
     relative_path: String,
     absolute_path: String,
     content: String,
+    binary: bool,
     modified_ms: Option<u128>,
 }
 
@@ -123,6 +124,16 @@ fn should_read_file(path: &Path) -> bool {
     )
 }
 
+fn is_image_file(path: &Path) -> bool {
+    matches!(
+        path.extension()
+            .and_then(|value| value.to_str())
+            .map(|value| value.to_ascii_lowercase())
+            .as_deref(),
+        Some("png" | "jpg" | "jpeg" | "gif" | "webp" | "svg" | "bmp" | "avif")
+    )
+}
+
 fn allowed_dot_dir(name: &str) -> bool {
     name == ".everend" || name == ".pathbranching"
 }
@@ -170,18 +181,25 @@ fn walk_vault(
                         directories.push(relative_path);
                     }
                     walk_vault(root, &path, files, directories, errors);
-                } else if should_read_file(&path) {
+                } else if should_read_file(&path) || is_image_file(&path) {
                     let relative_path = path
                         .strip_prefix(root)
                         .unwrap_or(&path)
                         .to_string_lossy()
                         .replace('\\', "/");
 
-                    match fs::read_to_string(&path) {
+                    let binary = is_image_file(&path);
+                    let content = if binary {
+                        Ok(String::new())
+                    } else {
+                        fs::read_to_string(&path)
+                    };
+                    match content {
                         Ok(content) => files.push(VaultFile {
                             relative_path,
                             absolute_path: path.to_string_lossy().to_string(),
                             content,
+                            binary,
                             modified_ms: modified_ms(&path),
                         }),
                         Err(error) => errors.push(VaultReadError {

@@ -4,6 +4,7 @@
     "id": "event:arrival",
     "name": "Arrival at Northwatch",
     "description": "Aster reaches the tower.",
+    "coverImage": { "id": "event-cover:arrival", "assetId": "asset:arrival" },
     "text": {
       "format": "plain",
       "content": "[[Aster]] sees the lights of [[Northwatch]]."

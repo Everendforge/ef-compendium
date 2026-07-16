@@ -3,6 +3,16 @@ import path from "node:path";
 import type { SourceFile } from "../../types.js";
 
 const TEXT_EXTENSIONS = new Set([".md", ".yaml", ".yml", ".json"]);
+const IMAGE_EXTENSIONS = new Set([
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".svg",
+  ".bmp",
+  ".avif",
+]);
 
 /** Dot-directories the walk is allowed to descend into. */
 const ALLOWED_DOT_DIRS = new Set([".everend", ".pathbranching"]);
@@ -21,6 +31,15 @@ function walk(root: string, current: string, files: SourceFile[]) {
       files.push({
         relativePath: path.relative(root, fullPath).replaceAll(path.sep, "/"),
         content: fs.readFileSync(fullPath, "utf8"),
+      });
+    } else if (
+      entry.isFile() &&
+      IMAGE_EXTENSIONS.has(path.extname(entry.name).toLowerCase())
+    ) {
+      files.push({
+        relativePath: path.relative(root, fullPath).replaceAll(path.sep, "/"),
+        content: "",
+        binary: true,
       });
     }
   }

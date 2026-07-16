@@ -1,5 +1,6 @@
 import type { Entity, SiteData, Story, StoryEvent } from "../types";
 import { EntryBody } from "./EntryBody";
+import { VaultAssetImage } from "./VaultAssetImage";
 import type { ReaderNavigation } from "./Reader";
 
 export function EventPage({
@@ -20,6 +21,27 @@ export function EventPage({
   return (
     <div className="entry-layout">
       <article className="entry">
+        {event.coverImage ? (
+          <VaultAssetImage
+            path={event.coverImage}
+            vaultPath={site.vaultPath}
+            alt=""
+            className="event-cover-image"
+          />
+        ) : null}
+        {event.images && event.images.length > 1 ? (
+          <div className="event-image-gallery" aria-label="Scene images">
+            {event.images.slice(1).map((path) => (
+              <VaultAssetImage
+                key={path}
+                path={path}
+                vaultPath={site.vaultPath}
+                alt=""
+                className="event-scene-image"
+              />
+            ))}
+          </div>
+        ) : null}
         <div className="entry-heading">
           <p className="chapter">{story.name}</p>
           <h1>{event.name}</h1>

@@ -1,5 +1,6 @@
 import YAML from "yaml";
 import type { Entity, SourceFile } from "../types.js";
+import { presentationFromProperties, resolveVaultAssetPath } from "./assets.js";
 import {
   findWikilinks,
   renderMarkdownWith,
@@ -77,7 +78,8 @@ export function discoverEntityStatuses(files: SourceFile[]) {
     if (!isEntityDocument(relativePath)) continue;
     const parsed = parseDocument(file.content);
     const status = parsed?.frontmatter.status;
-    if (typeof status === "string" && status.trim()) statuses.add(status.trim());
+    if (typeof status === "string" && status.trim())
+      statuses.add(status.trim());
   }
   return [...statuses].sort((left, right) => left.localeCompare(right));
 }
@@ -89,6 +91,13 @@ export function projectEntities(
   sanitize: Sanitizer,
 ): Entity[] {
   const entities: Entity[] = [];
+  const assetPaths = files
+    .filter((file) => file.binary)
+    .map((file) => file.relativePath.replaceAll("\\", "/"));
+  const propertiesContent = files.find(
+    (file) =>
+      file.relativePath.replaceAll("\\", "/") === ".everend/properties.json",
+  )?.content;
   const seenIds = new Set<string>();
   for (const file of files) {
     const relativePath = file.relativePath.replaceAll("\\", "/");
@@ -142,6 +151,13 @@ export function projectEntities(
       map: asOptionalString(parsed.frontmatter.map),
       mapX: asOptionalNumber(parsed.frontmatter.mapX),
       mapY: asOptionalNumber(parsed.frontmatter.mapY),
+      presentation: presentationFromProperties(
+        propertiesContent,
+        type,
+        parsed.frontmatter,
+        assetPaths,
+        relativePath,
+      ),
     });
   }
 
@@ -168,6 +184,7 @@ export function projectEntities(
           : undefined;
       },
       sanitize,
+      (asset) => resolveVaultAssetPath(assetPaths, entity.path, asset),
     );
   });
   return entities.sort((left, right) => left.name.localeCompare(right.name));

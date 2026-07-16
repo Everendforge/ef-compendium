@@ -28,7 +28,14 @@ export type UniverseProfile = {
 export type SourceFile = {
   relativePath: string;
   content: string;
+  /** Binary vault assets are indexed by path so renderers can resolve them. */
+  binary?: boolean;
   modifiedMs?: number;
+};
+
+export type EntityPresentation = {
+  portrait?: string;
+  cover?: string;
 };
 
 export type Entity = {
@@ -59,6 +66,7 @@ export type Entity = {
   map?: string;
   mapX?: number;
   mapY?: number;
+  presentation?: EntityPresentation;
 };
 
 export type StoryEvent = {
@@ -67,6 +75,10 @@ export type StoryEvent = {
   description?: string;
   text?: string;
   canonRefs: string[];
+  /** Vault-relative PathBranching event cover image asset. */
+  coverImage?: string;
+  /** Additional editorial scene images attached to dialogue beats. */
+  images?: string[];
   route: string;
   html: string;
 };
@@ -85,6 +97,8 @@ export type SiteData = {
   entities: Entity[];
   /** Status values found in entity frontmatter, including unpublished entries. */
   availableStatuses: string[];
+  /** Vault-relative binary asset paths indexed during load. */
+  assetPaths: string[];
   stories: Story[];
   warnings: string[];
 };

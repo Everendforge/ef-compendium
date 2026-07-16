@@ -1,6 +1,12 @@
-import type { SiteData, SourceFile, UniverseIcon, UniverseProfile } from "../types.js";
+import type {
+  SiteData,
+  SourceFile,
+  UniverseIcon,
+  UniverseProfile,
+} from "../types.js";
 import { CONFIG_RELATIVE_PATH, parseConfig } from "./config.js";
 import { renderMarkdownWith, type Sanitizer } from "./markdown.js";
+import { resolveVaultAssetPath } from "./assets.js";
 import { projectStories } from "./pathbranching.js";
 import {
   discoverEntityStatuses,
@@ -13,9 +19,12 @@ function vaultBaseName(vaultPath: string) {
   return trimmed.split("/").pop() || trimmed;
 }
 
-function parseUniverseProfile(files: SourceFile[]): UniverseProfile | undefined {
+function parseUniverseProfile(
+  files: SourceFile[],
+): UniverseProfile | undefined {
   const profileFile = files.find(
-    (file) => file.relativePath.replaceAll("\\", "/") === ".everend/universe.json",
+    (file) =>
+      file.relativePath.replaceAll("\\", "/") === ".everend/universe.json",
   );
   if (!profileFile) return undefined;
 
@@ -30,7 +39,10 @@ function parseUniverseProfile(files: SourceFile[]): UniverseProfile | undefined 
           }
         : undefined;
     return {
-      name: typeof parsed.name === "string" && parsed.name.trim() ? parsed.name.trim() : undefined,
+      name:
+        typeof parsed.name === "string" && parsed.name.trim()
+          ? parsed.name.trim()
+          : undefined,
       icon,
     };
   } catch {
@@ -57,6 +69,9 @@ export function assembleSiteData(
   const universeProfile = parseUniverseProfile(files);
   const availableStatuses = discoverEntityStatuses(files);
   const warnings: string[] = [];
+  const assetPaths = files
+    .filter((file) => file.binary)
+    .map((file) => file.relativePath.replaceAll("\\", "/"));
   const entities = projectEntities(
     files,
     config.publication?.statuses ?? ["canon"],
@@ -70,7 +85,9 @@ export function assembleSiteData(
     for (const sequence of story.sequences) {
       for (const event of sequence.events) {
         event.html = event.text
-          ? renderMarkdownWith(event.text, resolveLink, sanitize)
+          ? renderMarkdownWith(event.text, resolveLink, sanitize, (asset) =>
+              resolveVaultAssetPath(assetPaths, undefined, asset),
+            )
           : "";
       }
     }
@@ -85,6 +102,7 @@ export function assembleSiteData(
     description: config.site?.description ?? `A public guide to ${title}.`,
     entities,
     availableStatuses,
+    assetPaths,
     stories,
     warnings,
   };

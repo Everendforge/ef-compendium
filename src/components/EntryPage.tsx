@@ -1,6 +1,7 @@
 import { PencilLine } from "lucide-react";
 import type { Entity, SiteData } from "../types";
 import { EntryBody } from "./EntryBody";
+import { VaultAssetImage } from "./VaultAssetImage";
 import type { ReaderNavigation } from "./Reader";
 
 export function EntryPage({
@@ -28,6 +29,14 @@ export function EntryPage({
   return (
     <div className="entry-layout">
       <article className="entry">
+        {entity.presentation?.cover ? (
+          <VaultAssetImage
+            path={entity.presentation.cover}
+            vaultPath={site.vaultPath}
+            alt=""
+            className="entry-cover-image"
+          />
+        ) : null}
         <div className="entry-heading">
           <div className="entry-heading-meta">
             <p className="chapter">{entity.type}</p>
@@ -41,7 +50,17 @@ export function EntryPage({
               </button>
             ) : null}
           </div>
-          <h1>{entity.name}</h1>
+          <div className="entry-title-row">
+            {entity.presentation?.portrait ? (
+              <VaultAssetImage
+                path={entity.presentation.portrait}
+                vaultPath={site.vaultPath}
+                alt={`${entity.name} portrait`}
+                className="entry-portrait-image"
+              />
+            ) : null}
+            <h1>{entity.name}</h1>
+          </div>
           {entity.tags.length > 0 ? (
             <p className="tags">{entity.tags.join(" · ")}</p>
           ) : null}

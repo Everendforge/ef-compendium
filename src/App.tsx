@@ -24,7 +24,10 @@ import { SearchBox } from "./components/SearchBox";
 import { timelineEntries } from "./components/TimelineView";
 import { UniverseIconFrame } from "./components/UniverseIconFrame";
 import { CorrectionDialog } from "./components/CorrectionDialog";
-import { SettingsDialog, type SettingsSection } from "./components/SettingsDialog";
+import {
+  SettingsDialog,
+  type SettingsSection,
+} from "./components/SettingsDialog";
 import { assembleSiteData } from "./lib/assemble";
 import { serializeConfig } from "./lib/config";
 import { sanitizeDom } from "./lib/sanitize-dom";
@@ -84,7 +87,7 @@ function ForgeCornerLogo() {
 
 type AppView = "home" | "reader";
 type LoadState = "idle" | "loading" | "error";
-type SettingsScope = "app" | "universe" | "about";
+type SettingsScope = "app" | "universe" | "about" | "suite" | "update";
 
 function universePathName(path: string) {
   return path.split(/[\\/]/).filter(Boolean).pop() ?? path;
@@ -131,27 +134,67 @@ function UniverseProfileEditor({
           <span>Universe name</span>
           <input
             value={draft.name ?? ""}
-            onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+            onChange={(event) =>
+              setDraft((current) => ({ ...current, name: event.target.value }))
+            }
             placeholder={site.title}
           />
         </label>
         <div className="icon-preset-row">
-          {[["book", BookOpen], ["globe", Globe2], ["castle", Castle], ["sparkles", Sparkles]].map(([value, Icon]) => (
-            <button key={value as string} type="button" className={draft.icon?.type === "preset" && draft.icon.value === value ? "active" : ""} onClick={() => setDraft((current) => ({ ...current, icon: { type: "preset", value: value as string } }))} title={`Use ${value} icon`}>
+          {[
+            ["book", BookOpen],
+            ["globe", Globe2],
+            ["castle", Castle],
+            ["sparkles", Sparkles],
+          ].map(([value, Icon]) => (
+            <button
+              key={value as string}
+              type="button"
+              className={
+                draft.icon?.type === "preset" && draft.icon.value === value
+                  ? "active"
+                  : ""
+              }
+              onClick={() =>
+                setDraft((current) => ({
+                  ...current,
+                  icon: { type: "preset", value: value as string },
+                }))
+              }
+              title={`Use ${value} icon`}
+            >
               <Icon size={16} />
             </button>
           ))}
           <label className="image-upload-button" title="Use PNG or JPG">
             <Upload size={16} />
-            <input type="file" accept="image/png,image/jpeg" onChange={async (event) => {
-              const file = event.target.files?.[0];
-              if (!file) return;
-              const value = await readImageFile(file);
-              setDraft((current) => ({ ...current, icon: { type: "image", value } }));
-            }} />
+            <input
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={async (event) => {
+                const file = event.target.files?.[0];
+                if (!file) return;
+                const value = await readImageFile(file);
+                setDraft((current) => ({
+                  ...current,
+                  icon: { type: "image", value },
+                }));
+              }}
+            />
           </label>
         </div>
-        <button type="button" onClick={async () => { setSaving(true); try { await onSave(draft); } finally { setSaving(false); } }} disabled={saving}>
+        <button
+          type="button"
+          onClick={async () => {
+            setSaving(true);
+            try {
+              await onSave(draft);
+            } finally {
+              setSaving(false);
+            }
+          }}
+          disabled={saving}
+        >
           Save customization
         </button>
       </div>
@@ -199,21 +242,26 @@ function PublicationSettings({
   onSave: (statuses: string[]) => Promise<void>;
 }) {
   const configuredStatuses = site.config.publication?.statuses ?? ["canon"];
-  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(configuredStatuses);
+  const [selectedStatuses, setSelectedStatuses] =
+    useState<string[]>(configuredStatuses);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setSelectedStatuses(site.config.publication?.statuses ?? ["canon"]);
   }, [site]);
 
-  const statuses = [...new Set(["canon", ...site.availableStatuses, ...selectedStatuses])];
+  const statuses = [
+    ...new Set(["canon", ...site.availableStatuses, ...selectedStatuses]),
+  ];
 
   return (
     <section className="publication-settings">
       <div className="settings-section-heading">
         <div>
           <h4>Published content</h4>
-          <p>Choose which frontmatter statuses are visible in this Compendium.</p>
+          <p>
+            Choose which frontmatter statuses are visible in this Compendium.
+          </p>
         </div>
         <span>{site.entities.length} visible</span>
       </div>
@@ -408,7 +456,8 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     }));
   }, [suiteChrome?.suiteSettings]);
 
-  const activeTheme = (suiteChrome?.suiteSettings?.style ?? settings.theme) as ThemeId;
+  const activeTheme = (suiteChrome?.suiteSettings?.style ??
+    settings.theme) as ThemeId;
   const activeThemeIsDark = isDarkTheme(activeTheme);
 
   const effectivePrimaryFont = (suiteChrome?.suiteSettings?.primaryFont ??
@@ -434,41 +483,53 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   }, []);
 
   const settingsSection: SettingsSection =
-    settingsScope === "universe" ? "universe" : settingsScope === "about" ? "about" : "appearance";
+    settingsScope === "app" ? "appearance" : settingsScope;
 
   const changeSettingsSection = useCallback((section: SettingsSection) => {
     setSettingsScope(section === "appearance" ? "app" : section);
   }, []);
 
-  const saveUniverseProfile = useCallback(async (profile: UniverseProfile) => {
-    if (!site) return;
-    const normalizedProfile: UniverseProfile = {
-      name: profile.name?.trim() || undefined,
-      icon: profile.icon,
-    };
-    const result = await saveUniverseTextFile(
-      site.vaultPath,
-      ".everend/universe.json",
-      `${JSON.stringify(normalizedProfile, null, 2)}\n`,
-    );
-    if (!result.ok) throw new Error(result.message ?? "Could not save universe profile.");
-    setSite((current) => current ? { ...current, universeProfile: normalizedProfile } : current);
-  }, [site]);
+  const saveUniverseProfile = useCallback(
+    async (profile: UniverseProfile) => {
+      if (!site) return;
+      const normalizedProfile: UniverseProfile = {
+        name: profile.name?.trim() || undefined,
+        icon: profile.icon,
+      };
+      const result = await saveUniverseTextFile(
+        site.vaultPath,
+        ".everend/universe.json",
+        `${JSON.stringify(normalizedProfile, null, 2)}\n`,
+      );
+      if (!result.ok)
+        throw new Error(result.message ?? "Could not save universe profile.");
+      setSite((current) =>
+        current ? { ...current, universeProfile: normalizedProfile } : current,
+      );
+    },
+    [site],
+  );
 
-  const savePublicationStatuses = useCallback(async (statuses: string[]) => {
-    if (!site) return;
-    const nextConfig = {
-      ...site.config,
-      publication: { ...site.config.publication, statuses },
-    };
-    const result = await saveUniverseTextFile(
-      site.vaultPath,
-      ".everend/compendium.yaml",
-      serializeConfig(nextConfig),
-    );
-    if (!result.ok) throw new Error(result.message ?? "Could not save publication settings.");
-    await loadUniverse(site.vaultPath);
-  }, [loadUniverse, site]);
+  const savePublicationStatuses = useCallback(
+    async (statuses: string[]) => {
+      if (!site) return;
+      const nextConfig = {
+        ...site.config,
+        publication: { ...site.config.publication, statuses },
+      };
+      const result = await saveUniverseTextFile(
+        site.vaultPath,
+        ".everend/compendium.yaml",
+        serializeConfig(nextConfig),
+      );
+      if (!result.ok)
+        throw new Error(
+          result.message ?? "Could not save publication settings.",
+        );
+      await loadUniverse(site.vaultPath);
+    },
+    [loadUniverse, site],
+  );
 
   useEffect(() => {
     if (!isTauriRuntime()) return;
@@ -522,8 +583,15 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   if (view === "home" || !site) {
     if (suiteChrome?.sharedUniversePath) {
       return (
-        <main className="suite-shared-world-loading" aria-busy={loadState === "loading"}>
-          <p>{loadState === "error" ? errorMessage : "Opening the shared world..."}</p>
+        <main
+          className="suite-shared-world-loading"
+          aria-busy={loadState === "loading"}
+        >
+          <p>
+            {loadState === "error"
+              ? errorMessage
+              : "Opening the shared world..."}
+          </p>
           {loadState === "error" ? (
             <button type="button" onClick={suiteChrome.onHome}>
               Choose another world
@@ -564,24 +632,44 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
               onClick={toggleTheme}
               title="Toggle theme"
             >
-              {activeThemeIsDark ? (
-                <Sun size={16} />
-              ) : (
-                <Moon size={16} />
-              )}
+              {activeThemeIsDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
           </div>
         </header>
         {showSettings ? (
           <SettingsDialog
-            section={settingsSection === "universe" ? "appearance" : settingsSection}
+            section={settingsSection}
             onSectionChange={changeSettingsSection}
             onClose={() => setShowSettings(false)}
             onOpenDocs={() => void openExternal(COMPENDIUM_DOCS_URL)}
-            appearance={<>
-              <label className="typography-setting"><span>Style</span><select value={suiteChrome?.suiteSettings?.style ?? settings.theme} onChange={(event) => suiteChrome?.suiteSettings ? suiteChrome.suiteSettings.onStyleChange(event.target.value) : setStandaloneStyle(event.target.value as ThemeId)}>{THEMES.map((theme) => <option key={theme.id} value={theme.id}>{theme.label}</option>)}</select></label>
-              <TypographySettings value={effectivePrimaryFont} onChange={setPrimaryFont} />
-            </>}
+            appearance={
+              <>
+                <label className="typography-setting">
+                  <span>Style</span>
+                  <select
+                    value={suiteChrome?.suiteSettings?.style ?? settings.theme}
+                    onChange={(event) =>
+                      suiteChrome?.suiteSettings
+                        ? suiteChrome.suiteSettings.onStyleChange(
+                            event.target.value,
+                          )
+                        : setStandaloneStyle(event.target.value as ThemeId)
+                    }
+                  >
+                    {THEMES.map((theme) => (
+                      <option key={theme.id} value={theme.id}>
+                        {theme.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <TypographySettings
+                  value={effectivePrimaryFont}
+                  onChange={setPrimaryFont}
+                />
+              </>
+            }
+            suiteSettings={suiteChrome?.suiteSettings}
           />
         ) : null}
         <section className="home-panel">
@@ -667,9 +755,33 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             className={`forge-corner-menu ${forgeMenuOpen ? "open" : ""}`}
           >
             <div className="forge-orbit-panel" aria-label="Everend menu">
-              <button type="button" onClick={() => { setView("home"); setForgeMenuOpen(false); }}>Compendium Home</button>
-              <button type="button" onClick={() => { void openUniverse(); setForgeMenuOpen(false); }}>Open Universe…</button>
-              <button type="button" onClick={() => { openSettings("app"); setForgeMenuOpen(false); }}>Settings…</button>
+              <button
+                type="button"
+                onClick={() => {
+                  setView("home");
+                  setForgeMenuOpen(false);
+                }}
+              >
+                Compendium Home
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void openUniverse();
+                  setForgeMenuOpen(false);
+                }}
+              >
+                Open Universe…
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  openSettings("app");
+                  setForgeMenuOpen(false);
+                }}
+              >
+                Settings…
+              </button>
               <span className="forge-menu-separator" />
               <button
                 type="button"
@@ -691,7 +803,15 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
               >
                 Buy Suite
               </button>
-              <button type="button" onClick={() => { openSettings("about"); setForgeMenuOpen(false); }}>About Compendium</button>
+              <button
+                type="button"
+                onClick={() => {
+                  openSettings("about");
+                  setForgeMenuOpen(false);
+                }}
+              >
+                About Compendium
+              </button>
             </div>
             <button
               type="button"
@@ -825,7 +945,9 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             title={`Diagnostics${site.warnings.length ? ` (${site.warnings.length})` : ""}`}
           >
             <FileWarning size={15} />
-            {site.warnings.length ? <span className="warning-count">{site.warnings.length}</span> : null}
+            {site.warnings.length ? (
+              <span className="warning-count">{site.warnings.length}</span>
+            ) : null}
           </button>
           <button
             type="button"
@@ -842,11 +964,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             onClick={toggleTheme}
             title="Toggle theme"
           >
-            {activeThemeIsDark ? (
-              <Sun size={15} />
-            ) : (
-              <Moon size={15} />
-            )}
+            {activeThemeIsDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
         </div>
       </div>
@@ -857,20 +975,101 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
           onSectionChange={changeSettingsSection}
           onClose={() => setShowSettings(false)}
           onOpenDocs={() => void openExternal(COMPENDIUM_DOCS_URL)}
-          appearance={<>
-            <label className="typography-setting"><span>Style</span><select value={suiteChrome?.suiteSettings?.style ?? settings.theme} onChange={(event) => suiteChrome?.suiteSettings ? suiteChrome.suiteSettings.onStyleChange(event.target.value) : setStandaloneStyle(event.target.value as ThemeId)}>{THEMES.map((theme) => <option key={theme.id} value={theme.id}>{theme.label}</option>)}</select></label>
-            <TypographySettings value={effectivePrimaryFont} onChange={setPrimaryFont} />
-          </>}
-          universe={<div className="universe-settings-summary"><UniverseProfileEditor site={site} onSave={saveUniverseProfile} /><PublicationSettings site={site} onSave={savePublicationStatuses} /><small>{site.vaultPath}</small><button type="button" onClick={() => void revealVault(site.vaultPath)}>Show in Explorer</button></div>}
+          appearance={
+            <>
+              <label className="typography-setting">
+                <span>Style</span>
+                <select
+                  value={suiteChrome?.suiteSettings?.style ?? settings.theme}
+                  onChange={(event) =>
+                    suiteChrome?.suiteSettings
+                      ? suiteChrome.suiteSettings.onStyleChange(
+                          event.target.value,
+                        )
+                      : setStandaloneStyle(event.target.value as ThemeId)
+                  }
+                >
+                  {THEMES.map((theme) => (
+                    <option key={theme.id} value={theme.id}>
+                      {theme.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <TypographySettings
+                value={effectivePrimaryFont}
+                onChange={setPrimaryFont}
+              />
+            </>
+          }
+          suiteSettings={suiteChrome?.suiteSettings}
+          universe={
+            <div className="universe-settings-summary">
+              <UniverseProfileEditor site={site} onSave={saveUniverseProfile} />
+              <PublicationSettings
+                site={site}
+                onSave={savePublicationStatuses}
+              />
+              <small>{site.vaultPath}</small>
+              <button
+                type="button"
+                onClick={() => void revealVault(site.vaultPath)}
+              >
+                Show in Explorer
+              </button>
+            </div>
+          }
         />
       ) : null}
 
       {showDiagnostics ? (
         <aside className="diagnostics-drawer" aria-label="Universe diagnostics">
-          <header><div><span>Publication health</span><h2>Diagnostics</h2></div><button type="button" onClick={() => setShowDiagnostics(false)}>×</button></header>
-          <div className={`diagnostics-summary ${site.warnings.length ? "warning" : "clean"}`}><Wrench size={18} /><div><strong>{site.warnings.length ? `${site.warnings.length} issue${site.warnings.length === 1 ? "" : "s"} to review` : "Everything reads cleanly"}</strong><p>Compendium reports problems without changing source files.</p></div></div>
-          {site.warnings.length ? <ul>{site.warnings.map((warning, index) => <li key={`${warning}-${index}`}><FileWarning size={15} /><span>{warning}</span></li>)}</ul> : null}
-          <footer><p>Found a factual or writing error while reading?</p><button type="button" disabled={!site.entities.find((entity) => entity.route === route)} onClick={() => setCorrectionEntity(site.entities.find((entity) => entity.route === route))}>Suggest correction to this entry</button></footer>
+          <header>
+            <div>
+              <span>Publication health</span>
+              <h2>Diagnostics</h2>
+            </div>
+            <button type="button" onClick={() => setShowDiagnostics(false)}>
+              ×
+            </button>
+          </header>
+          <div
+            className={`diagnostics-summary ${site.warnings.length ? "warning" : "clean"}`}
+          >
+            <Wrench size={18} />
+            <div>
+              <strong>
+                {site.warnings.length
+                  ? `${site.warnings.length} issue${site.warnings.length === 1 ? "" : "s"} to review`
+                  : "Everything reads cleanly"}
+              </strong>
+              <p>Compendium reports problems without changing source files.</p>
+            </div>
+          </div>
+          {site.warnings.length ? (
+            <ul>
+              {site.warnings.map((warning, index) => (
+                <li key={`${warning}-${index}`}>
+                  <FileWarning size={15} />
+                  <span>{warning}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <footer>
+            <p>Found a factual or writing error while reading?</p>
+            <button
+              type="button"
+              disabled={!site.entities.find((entity) => entity.route === route)}
+              onClick={() =>
+                setCorrectionEntity(
+                  site.entities.find((entity) => entity.route === route),
+                )
+              }
+            >
+              Suggest correction to this entry
+            </button>
+          </footer>
         </aside>
       ) : null}
 
@@ -886,7 +1085,13 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
         refresh={() => void readCurrentUniverse()}
         onSuggestCorrection={setCorrectionEntity}
       />
-      {correctionEntity ? <CorrectionDialog site={site} entity={correctionEntity} onClose={() => setCorrectionEntity(undefined)} /> : null}
+      {correctionEntity ? (
+        <CorrectionDialog
+          site={site}
+          entity={correctionEntity}
+          onClose={() => setCorrectionEntity(undefined)}
+        />
+      ) : null}
     </main>
   );
 }

@@ -250,6 +250,43 @@ body {
 .entry-body a {
   color: #176176;
 }
+.entry-body img,
+.entry-cover-image,
+.event-cover-image {
+  max-width: 100%;
+  border-radius: 8px;
+}
+.event-image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.event-scene-image {
+  width: 100%;
+  max-height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+.entry-cover-image,
+.event-cover-image {
+  display: block;
+  width: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  margin-bottom: 24px;
+}
+.entry-title-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.entry-portrait-image {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  border-radius: 50%;
+}
 .related {
   position: absolute;
   top: 0;
