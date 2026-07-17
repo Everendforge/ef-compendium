@@ -59,6 +59,13 @@ import {
 } from "./typography";
 import type { Entity, SiteData, UniverseProfile } from "./types";
 import type { SuiteChrome } from "./suiteChrome";
+import {
+  VAULT_APPEARANCE_SETTINGS_PATH,
+  applyVaultAppearanceSettings,
+  parseVaultAppearanceSettings,
+  serializeVaultAppearance,
+  serializeVaultAppearanceSettings,
+} from "./vaultAppearanceSettings";
 
 const EVEREND_FORGE_GITHUB_URL =
   "https://github.com/Everendforge/everend-forge";
@@ -327,6 +334,8 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   const forgeMenuRef = useRef<HTMLDivElement | null>(null);
   const appliedPresetRef = useRef<string | undefined>(undefined);
   const recentUniverseAttemptedRef = useRef<string | undefined>(undefined);
+  /** Serialized appearance last known to match `.everend/.compendium/settings.json` on disk. */
+  const vaultAppearanceOnDiskRef = useRef<string | undefined>(undefined);
 
   useEffect(() => {
     document.documentElement.dataset.theme =
@@ -338,6 +347,28 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     document.documentElement.style.removeProperty("--cp-accent");
     saveSettings(settings);
   }, [settings, suiteChrome?.suiteSettings?.style]);
+
+  useEffect(() => {
+    const vaultPath = site?.vaultPath;
+    if (!vaultPath || !isTauriRuntime()) return;
+    const content = serializeVaultAppearanceSettings(settings);
+    if (vaultAppearanceOnDiskRef.current === content) return;
+    const timer = setTimeout(() => {
+      vaultAppearanceOnDiskRef.current = content;
+      void saveUniverseTextFile(vaultPath, VAULT_APPEARANCE_SETTINGS_PATH, content)
+        .then((result) => {
+          if (!result.ok && vaultAppearanceOnDiskRef.current === content) {
+            vaultAppearanceOnDiskRef.current = undefined;
+          }
+        })
+        .catch(() => {
+          if (vaultAppearanceOnDiskRef.current === content) {
+            vaultAppearanceOnDiskRef.current = undefined;
+          }
+        });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [settings, site?.vaultPath]);
 
   useEffect(() => {
     if (!forgeMenuOpen) return;
@@ -388,8 +419,21 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
           result.files,
           sanitizeDom,
         );
+        const vaultAppearance = parseVaultAppearanceSettings(result.files);
+        // Track what's on disk for this universe so the appearance-save
+        // effect doesn't immediately re-write the file it just loaded, but
+        // does seed `.everend/.compendium/settings.json` the first time a
+        // universe without one opens.
+        vaultAppearanceOnDiskRef.current = vaultAppearance
+          ? serializeVaultAppearance(vaultAppearance)
+          : undefined;
         applySite(data);
-        setSettings((current) => rememberUniverse(current, result.rootPath));
+        setSettings((current) =>
+          applyVaultAppearanceSettings(
+            rememberUniverse(current, result.rootPath),
+            vaultAppearance,
+          ),
+        );
       } catch (error) {
         setLoadState("error");
         setErrorMessage(error instanceof Error ? error.message : String(error));
