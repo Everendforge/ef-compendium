@@ -15,6 +15,8 @@
   <a href="https://github.com/Everendforge/everend-forge"><img src="https://img.shields.io/badge/Everend%20Forge-open%20core%20suite-0a0e1a.svg" alt="Part of Everend Forge"></a>
 </p>
 
+<p align="center"><a href="https://everend-forge-site.pages.dev/#access">Conoce y compra Everend Forge Suite →</a></p>
+
 ---
 
 Everend Compendium turns a WorldNotion vault and PathBranching's saved stories into a public static reading site. Canon Markdown remains the source of truth; the Compendium never writes during builds.
