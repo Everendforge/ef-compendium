@@ -1,5 +1,32 @@
 import type { ReactNode } from "react";
 
+export type SuiteLicenseStatus = "idle" | "activating" | "active" | "inactive" | "error";
+
+export type SuiteLicenseInstance = {
+  id: string;
+  name: string;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export type SuiteLicenseControls = {
+  status: SuiteLicenseStatus;
+  licenseKey?: string;
+  instanceName?: string;
+  currentInstanceId?: string;
+  activationUsage?: number;
+  activationLimit?: number;
+  error?: string;
+  instances?: SuiteLicenseInstance[];
+  devicesStatus?: "idle" | "loading" | "error";
+  devicesError?: string;
+  onActivate: (licenseKey: string) => void;
+  onValidate: () => void;
+  onDeactivate: () => void;
+  onLoadDevices: () => void;
+  onDeactivateDevice: (instanceId: string) => void;
+};
+
 export type SuiteSettings = {
   primaryFont: string;
   onPrimaryFontChange: (font: string) => void;
@@ -7,10 +34,16 @@ export type SuiteSettings = {
   onStyleChange: (style: string) => void;
   onToggleStyleMode: () => void;
   update: SuiteUpdateControls;
+  license: SuiteLicenseControls;
 };
 
 export type SuiteUpdateStatus =
-  "idle" | "checking" | "up-to-date" | "available" | "downloading" | "error";
+  | "idle"
+  | "checking"
+  | "up-to-date"
+  | "available"
+  | "downloading"
+  | "error";
 
 export type SuiteUpdateControls = {
   appName: string;
@@ -29,25 +62,13 @@ export type SuiteUpdateControls = {
   onInstall: () => void;
 };
 
-export const SUITE_STYLE_OPTIONS = [
-  ["worldnotion-light", "WorldNotion Light"],
-  ["worldnotion-dark", "WorldNotion Dark"],
-  ["github", "GitHub Light"],
-  ["github-dark", "GitHub Dark"],
-  ["one-light-pro", "One Light Pro"],
-  ["one-dark-pro", "One Dark Pro"],
-  ["dracula-light", "Dracula Light"],
-  ["dracula", "Dracula"],
-  ["light-owl", "Light Owl"],
-  ["night-owl", "Night Owl"],
-  ["material-lighter", "Material Lighter"],
-  ["material-palenight", "Material Palenight"],
-] as const;
+export const SUITE_STYLE_OPTIONS = [["worldnotion-light", "WorldNotion Light"], ["worldnotion-dark", "WorldNotion Dark"], ["github", "GitHub Light"], ["github-dark", "GitHub Dark"], ["one-light-pro", "One Light Pro"], ["one-dark-pro", "One Dark Pro"], ["dracula-light", "Dracula Light"], ["dracula", "Dracula"], ["light-owl", "Light Owl"], ["night-owl", "Night Owl"], ["material-lighter", "Material Lighter"], ["material-palenight", "Material Palenight"]] as const;
 
 export type SuiteChrome = {
   active: boolean;
   sharedUniversePath?: string;
   onHome?: () => void;
+  onReload?: () => void;
   renderAppSwitcher: () => ReactNode;
   suiteSettings?: SuiteSettings;
 };

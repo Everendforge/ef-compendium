@@ -469,6 +469,12 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     suiteChrome?.sharedUniversePath,
   ]);
 
+  useEffect(() => {
+    const path = suiteChrome?.sharedUniversePath;
+    if (!path || site?.vaultPath === path) return;
+    void loadUniverse(path);
+  }, [loadUniverse, site?.vaultPath, suiteChrome?.sharedUniversePath]);
+
   const openUniverse = useCallback(async () => {
     if (!isTauriRuntime()) {
       setLoadState("error");
