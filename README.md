@@ -41,6 +41,10 @@ The chronology is opt-in: add `date: "Year 1024"` or `start:` / `end:` to an ent
 
 Maps are opt-in too. Create a published entity with `type: Map` and embed its image in the Markdown body. Pin an entity with `map: <map-id>`, `mapX: <0-100>`, and `mapY: <0-100>` in its frontmatter. These extra fields are additive and remain compatible with the v0.1 vault format.
 
+## Everend Forge Suite compatibility
+
+Compendium remains free and standalone, and it is also mounted as the reading workspace in the commercial Everend Forge Suite. Both modes open the same local universe folder. Compendium keeps the reader contract: it projects canon and selected narrative material without taking ownership of the source Markdown or PathBranching authoring data.
+
 ## Development
 
 ```sh
