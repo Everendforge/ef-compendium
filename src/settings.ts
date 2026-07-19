@@ -1,9 +1,12 @@
 import { normalizeThemeId, type ThemeId } from "./themes.js";
 import { normalizePrimaryFont, type PrimaryFontId } from "./typography.js";
+import { normalizeLocalePreference, type LocalePreference } from "./i18n";
 
 export const SETTINGS_KEY = "compendium.settings.v1";
 
 export type CompendiumSettings = {
+  /** Interface language only; universe publication content is never modified. */
+  localePreference: LocalePreference;
   theme: ThemeId;
   primaryFont: PrimaryFontId;
   recentUniverse?: string;
@@ -11,6 +14,7 @@ export type CompendiumSettings = {
 };
 
 const defaultSettings: CompendiumSettings = {
+  localePreference: "system",
   theme: "worldnotion-dark",
   primaryFont: "serif",
   recentUniverses: [],
@@ -22,6 +26,7 @@ export function loadSettings(): CompendiumSettings {
     if (!stored) return { ...defaultSettings };
     const parsed = JSON.parse(stored) as Partial<CompendiumSettings>;
     return {
+      localePreference: normalizeLocalePreference(parsed.localePreference),
       theme: normalizeThemeId(parsed.theme),
       primaryFont: normalizePrimaryFont(parsed.primaryFont),
       recentUniverse:

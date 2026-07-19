@@ -19,6 +19,10 @@
 
 Everend Compendium turns a WorldNotion vault and PathBranching's saved stories into a public static reading site. Canon Markdown remains the source of truth; the Compendium never writes during builds.
 
+## Product direction
+
+Compendium is the reading, consultation, and publication surface of Everend Forge. Its direction covers connected story creation for video games, roleplaying, and literature, complementing WorldNotion's canon and PathBranching's narrative structures. See [docs/PRODUCT_DIRECTION.md](docs/PRODUCT_DIRECTION.md) for the milestones and Compendium's role in each one.
+
 ## Use
 
 ```sh

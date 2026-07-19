@@ -8,6 +8,7 @@ import {
   FolderOpen,
   Globe2,
   Home,
+  MessageSquareText,
   Moon,
   Settings,
   Sparkles,
@@ -24,6 +25,8 @@ import { SearchBox } from "./components/SearchBox";
 import { timelineEntries } from "./components/TimelineView";
 import { UniverseIconFrame } from "./components/UniverseIconFrame";
 import { CorrectionDialog } from "./components/CorrectionDialog";
+import { BrandLoadingScreen } from "./components/BrandLoadingScreen";
+import { FeedbackModal } from "./components/FeedbackModal";
 import {
   SettingsDialog,
   type SettingsSection,
@@ -37,6 +40,7 @@ import {
   saveSettings,
   type CompendiumSettings,
 } from "./settings";
+import { applyInterfaceLocale } from "./i18n";
 import {
   indexVault,
   isTauriRuntime,
@@ -316,17 +320,24 @@ function PublicationSettings({
     </section>
   );
 }
+const STARTUP_LOADER_MIN_MS = 700;
+
 function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   const [settings, setSettings] = useState<CompendiumSettings>(() =>
     loadSettings(),
   );
+  useEffect(() => {
+    applyInterfaceLocale(suiteChrome?.suiteSettings?.localePreference ?? settings.localePreference);
+  }, [settings.localePreference, suiteChrome?.suiteSettings?.localePreference]);
   const [view, setView] = useState<AppView>("home");
   const [site, setSite] = useState<SiteData>();
   const [loadState, setLoadState] = useState<LoadState>("idle");
+  const [initialReady, setInitialReady] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [mode, setMode] = useState<ReaderMode>("web");
   const [route, setRoute] = useState("/");
   const [forgeMenuOpen, setForgeMenuOpen] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [settingsScope, setSettingsScope] = useState<SettingsScope>("app");
   const [showDiagnostics, setShowDiagnostics] = useState(false);
@@ -334,8 +345,29 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
   const forgeMenuRef = useRef<HTMLDivElement | null>(null);
   const appliedPresetRef = useRef<string | undefined>(undefined);
   const recentUniverseAttemptedRef = useRef<string | undefined>(undefined);
+  const startupStartedAtRef = useRef(Date.now());
+  const startupReadyTimerRef = useRef<number | undefined>(undefined);
   /** Serialized appearance last known to match `.everend/.compendium/settings.json` on disk. */
   const vaultAppearanceOnDiskRef = useRef<string | undefined>(undefined);
+
+  const finishInitialStartup = useCallback(() => {
+    if (startupReadyTimerRef.current !== undefined) return;
+    const remaining = Math.max(
+      0,
+      STARTUP_LOADER_MIN_MS - (Date.now() - startupStartedAtRef.current),
+    );
+    startupReadyTimerRef.current = window.setTimeout(() => {
+      startupReadyTimerRef.current = undefined;
+      setInitialReady(true);
+    }, remaining);
+  }, []);
+
+  useEffect(() => () => {
+    if (startupReadyTimerRef.current !== undefined) {
+      window.clearTimeout(startupReadyTimerRef.current);
+      startupReadyTimerRef.current = undefined;
+    }
+  }, []);
 
   useEffect(() => {
     document.documentElement.dataset.theme =
@@ -434,12 +466,16 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             vaultAppearance,
           ),
         );
+        finishInitialStartup();
+        suiteChrome?.onReady?.();
       } catch (error) {
         setLoadState("error");
         setErrorMessage(error instanceof Error ? error.message : String(error));
+        finishInitialStartup();
+        suiteChrome?.onReady?.();
       }
     },
-    [applySite],
+    [applySite, finishInitialStartup],
   );
 
   useEffect(() => {
@@ -474,6 +510,13 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     if (!path || site?.vaultPath === path) return;
     void loadUniverse(path);
   }, [loadUniverse, site?.vaultPath, suiteChrome?.sharedUniversePath]);
+
+  useEffect(() => {
+    if (suiteChrome?.sharedUniversePath) return;
+    if (!isTauriRuntime() || !settings.recentUniverse || settings.recentUniverse.startsWith("browser:")) {
+      finishInitialStartup();
+    }
+  }, [finishInitialStartup, settings.recentUniverse, suiteChrome?.sharedUniversePath]);
 
   const openUniverse = useCallback(async () => {
     if (!isTauriRuntime()) {
@@ -630,6 +673,10 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
     if (site) await loadUniverse(site.vaultPath);
   }
 
+  if (!suiteChrome && !initialReady) {
+    return <BrandLoadingScreen message={loadState === "loading" ? "Opening your universe…" : "Preparing your reading space…"} />;
+  }
+
   if (view === "home" || !site) {
     if (suiteChrome?.sharedUniversePath) {
       return (
@@ -679,8 +726,18 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             <button
               type="button"
               className="icon-button"
+              onClick={() => setShowFeedback(true)}
+              title="Enviar feedback"
+              aria-label="Enviar feedback"
+            >
+              <MessageSquareText size={16} />
+            </button>
+            <button
+              type="button"
+              className="icon-button"
               onClick={toggleTheme}
               title="Toggle theme"
+              aria-label="Toggle theme"
             >
               {activeThemeIsDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
@@ -691,6 +748,10 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
             section={settingsSection}
             onSectionChange={changeSettingsSection}
             onClose={() => setShowSettings(false)}
+            localePreference={suiteChrome?.suiteSettings?.localePreference ?? settings.localePreference}
+            onLocalePreferenceChange={(localePreference) => suiteChrome?.suiteSettings
+              ? suiteChrome.suiteSettings.onLocalePreferenceChange(localePreference)
+              : setSettings((current) => ({ ...current, localePreference }))}
             onOpenDocs={() => void openExternal(COMPENDIUM_DOCS_URL)}
             appearance={
               <>
@@ -738,10 +799,13 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
                 className="active-universe-card"
                 onClick={() => setView("reader")}
               >
-                <span className="eyebrow">Continue reading</span>
-                <strong>{universeDisplayName(site)}</strong>
-                <span>
-                  {site.entities.length} entries · {site.stories.length} stories
+                <BookOpen size={22} aria-hidden="true" />
+                <span className="active-universe-copy">
+                  <span className="eyebrow">Continue reading</span>
+                  <strong>{universeDisplayName(site)}</strong>
+                  <span>
+                    {site.entities.length} entries · {site.stories.length} stories
+                  </span>
                 </span>
               </button>
             ) : null}
@@ -852,6 +916,15 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
                 }
               >
                 Buy Suite
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setForgeMenuOpen(false);
+                  setShowFeedback(true);
+                }}
+              >
+                Enviar feedback
               </button>
               <button
                 type="button"
@@ -1011,8 +1084,18 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
           <button
             type="button"
             className="reader-icon-button"
+            onClick={() => setShowFeedback(true)}
+            title="Enviar feedback"
+            aria-label="Enviar feedback"
+          >
+            <MessageSquareText size={15} />
+          </button>
+          <button
+            type="button"
+            className="reader-icon-button"
             onClick={toggleTheme}
             title="Toggle theme"
+            aria-label="Toggle theme"
           >
             {activeThemeIsDark ? <Sun size={15} /> : <Moon size={15} />}
           </button>
@@ -1024,6 +1107,10 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
           section={settingsSection}
           onSectionChange={changeSettingsSection}
           onClose={() => setShowSettings(false)}
+          localePreference={suiteChrome?.suiteSettings?.localePreference ?? settings.localePreference}
+          onLocalePreferenceChange={(localePreference) => suiteChrome?.suiteSettings
+            ? suiteChrome.suiteSettings.onLocalePreferenceChange(localePreference)
+            : setSettings((current) => ({ ...current, localePreference }))}
           onOpenDocs={() => void openExternal(COMPENDIUM_DOCS_URL)}
           appearance={
             <>
@@ -1142,6 +1229,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
           onClose={() => setCorrectionEntity(undefined)}
         />
       ) : null}
+    {showFeedback ? <FeedbackModal screen="reader" onClose={() => setShowFeedback(false)} onOpenExternal={openExternal} /> : null}
     </main>
   );
 }

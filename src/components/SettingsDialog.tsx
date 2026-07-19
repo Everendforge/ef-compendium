@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import type { SuiteSettings } from "../suiteChrome";
+import type { LocalePreference } from "../i18n";
+import { compendiumSettingsCopy, interfaceLocaleCopy, resolveInterfaceLocale } from "../i18n";
 
 export type SettingsSection =
   "appearance" | "universe" | "about" | "suite" | "update";
@@ -21,6 +23,8 @@ export function SettingsDialog({
   universe,
   onOpenDocs,
   suiteSettings,
+  localePreference,
+  onLocalePreferenceChange,
 }: {
   section: SettingsSection;
   onSectionChange: (section: SettingsSection) => void;
@@ -29,7 +33,11 @@ export function SettingsDialog({
   universe?: ReactNode;
   onOpenDocs: () => void;
   suiteSettings?: SuiteSettings;
+  localePreference: LocalePreference;
+  onLocalePreferenceChange: (preference: LocalePreference) => void;
 }) {
+  const interfaceCopy = interfaceLocaleCopy(resolveInterfaceLocale(localePreference));
+  const settingsText = compendiumSettingsCopy(resolveInterfaceLocale(localePreference));
   return (
     <div
       className="dialog-backdrop"
@@ -47,29 +55,29 @@ export function SettingsDialog({
         <header className="dialog-header">
           <div>
             <span className="dialog-kicker">Everend Compendium</span>
-            <h2 id="settings-title">Settings</h2>
+            <h2 id="settings-title">{settingsText.title}</h2>
           </div>
           <button
             type="button"
             className="dialog-close"
             onClick={onClose}
-            title="Close"
+            title={settingsText.close}
           >
             <X size={18} />
           </button>
         </header>
         <div className="settings-dialog-body">
-          <nav className="settings-dialog-nav" aria-label="Settings sections">
+          <nav className="settings-dialog-nav" aria-label={settingsText.sections}>
             {suiteSettings ? (
               <div className="settings-nav-group">
-                <p>Forge</p>
+                <p>{settingsText.forge}</p>
                 <button
                   type="button"
                   className={section === "suite" ? "active" : ""}
                   onClick={() => onSectionChange("suite")}
                 >
                   <Settings2 size={16} />
-                  <span>Suite</span>
+                  <span>{settingsText.suite}</span>
                 </button>
                 <button
                   type="button"
@@ -77,19 +85,19 @@ export function SettingsDialog({
                   onClick={() => onSectionChange("update")}
                 >
                   <RefreshCw size={16} />
-                  <span>Update</span>
+                  <span>{settingsText.update}</span>
                 </button>
               </div>
             ) : null}
             <div className="settings-nav-group app-settings-group">
-              <p>Application</p>
+              <p>{settingsText.application}</p>
               <button
                 type="button"
                 className={section === "appearance" ? "active" : ""}
                 onClick={() => onSectionChange("appearance")}
               >
                 <Palette size={16} />
-                <span>Appearance</span>
+                <span>{settingsText.appearance}</span>
               </button>
               {universe ? (
                 <button
@@ -98,7 +106,7 @@ export function SettingsDialog({
                   onClick={() => onSectionChange("universe")}
                 >
                   <BookOpen size={16} />
-                  <span>Universe</span>
+                  <span>{settingsText.universe}</span>
                 </button>
               ) : null}
               <button
@@ -107,7 +115,7 @@ export function SettingsDialog({
                 onClick={() => onSectionChange("about")}
               >
                 <Settings2 size={16} />
-                <span>About</span>
+                <span>{settingsText.about}</span>
               </button>
             </div>
           </nav>
@@ -117,15 +125,23 @@ export function SettingsDialog({
                 <div className="settings-page-heading">
                   <Settings2 size={20} />
                   <div>
-                    <h3>Everend Forge Suite</h3>
+                    <h3>{settingsText.suiteTitle}</h3>
                     <p>
-                      Shared preferences applied to every app in this Suite.
+                      {settingsText.suiteDescription}
                     </p>
                   </div>
                 </div>
                 <div className="settings-control-panel">
                   <label className="typography-setting">
-                    <span>Style</span>
+                    <span>{interfaceCopy.interfaceLanguage}</span>
+                    <select value={localePreference} onChange={(event) => onLocalePreferenceChange(event.target.value as LocalePreference)}>
+                      <option value="system">{interfaceCopy.system}</option>
+                      <option value="en">English</option>
+                      <option value="es">Español</option>
+                    </select>
+                  </label>
+                  <label className="typography-setting">
+                    <span>{settingsText.style}</span>
                     <select
                       value={suiteSettings.style}
                       onChange={(event) =>
@@ -151,16 +167,16 @@ export function SettingsDialog({
                     </select>
                   </label>
                   <label className="typography-setting">
-                    <span>Primary typeface</span>
+                    <span>{settingsText.typeface}</span>
                     <select
                       value={suiteSettings.primaryFont}
                       onChange={(event) =>
                         suiteSettings.onPrimaryFontChange(event.target.value)
                       }
                     >
-                      <option value="sans">Sans serif</option>
-                      <option value="serif">Serif editorial</option>
-                      <option value="humanist">Humanist</option>
+                      <option value="sans">{settingsText.sans}</option>
+                      <option value="serif">{settingsText.serif}</option>
+                      <option value="humanist">{settingsText.humanist}</option>
                     </select>
                   </label>
                 </div>
@@ -171,23 +187,23 @@ export function SettingsDialog({
                 <div className="settings-page-heading">
                   <RefreshCw size={20} />
                   <div>
-                    <h3>Everend Forge Update</h3>
+                    <h3>{settingsText.updateTitle}</h3>
                     <p>
-                      Check, download, and install signed updates for the Suite.
+                      {settingsText.updateDescription}
                     </p>
                   </div>
                 </div>
                 <dl>
                   <div>
-                    <dt>Installed version</dt>
+                    <dt>{settingsText.installedVersion}</dt>
                     <dd>{suiteSettings.update.currentVersion}</dd>
                   </div>
                   <div>
-                    <dt>Platform</dt>
+                    <dt>{settingsText.platform}</dt>
                     <dd>{suiteSettings.update.platform}</dd>
                   </div>
                   <div>
-                    <dt>Application ID</dt>
+                    <dt>{settingsText.applicationId}</dt>
                     <dd>
                       <code>{suiteSettings.update.identifier}</code>
                     </dd>
@@ -199,20 +215,20 @@ export function SettingsDialog({
                 >
                   <strong>
                     {suiteSettings.update.status === "checking"
-                      ? "Checking for updates..."
+                      ? settingsText.checking
                       : suiteSettings.update.status === "available"
-                        ? `Version ${suiteSettings.update.availableVersion} is ready`
+                        ? settingsText.available.replace("{{version}}", suiteSettings.update.availableVersion ?? "")
                         : suiteSettings.update.status === "downloading"
-                          ? `Installing Everend Forge ${suiteSettings.update.availableVersion}...`
+                          ? settingsText.downloading.replace("{{version}}", suiteSettings.update.availableVersion ?? "")
                           : suiteSettings.update.status === "up-to-date"
-                            ? "You are up to date"
+                            ? settingsText.upToDate
                             : suiteSettings.update.status === "error"
-                              ? "Update check failed"
-                              : "Ready to check for updates"}
+                              ? settingsText.updateFailed
+                              : settingsText.ready}
                   </strong>
                   <p>
                     {suiteSettings.update.error ??
-                      "The updater is ready to contact the release server."}
+                      settingsText.updaterReady}
                   </p>
                 </div>
                 <div className="forge-update-actions">
@@ -224,7 +240,7 @@ export function SettingsDialog({
                       suiteSettings.update.status === "downloading"
                     }
                   >
-                    <RefreshCw size={14} /> Check for updates
+                    <RefreshCw size={14} /> {settingsText.check}
                   </button>
                   {suiteSettings.update.status === "available" ? (
                     <button
@@ -232,7 +248,7 @@ export function SettingsDialog({
                       className="primary-action"
                       onClick={suiteSettings.update.onInstall}
                     >
-                      Download and install
+                      {settingsText.install}
                     </button>
                   ) : null}
                 </div>
@@ -243,14 +259,23 @@ export function SettingsDialog({
                 <div className="settings-page-heading">
                   <Type size={20} />
                   <div>
-                    <h3>Reading appearance</h3>
+                    <h3>{settingsText.appearanceTitle}</h3>
                     <p>
-                      Choose a style and typeface that keep long entries
-                      comfortable.
+                      {settingsText.appearanceDescription}
                     </p>
                   </div>
                 </div>
-                <div className="settings-control-panel">{appearance}</div>
+                <div className="settings-control-panel">
+                  {!suiteSettings ? <label className="typography-setting">
+                    <span>{interfaceCopy.interfaceLanguage}</span>
+                    <select value={localePreference} onChange={(event) => onLocalePreferenceChange(event.target.value as LocalePreference)}>
+                      <option value="system">{interfaceCopy.system}</option>
+                      <option value="en">English</option>
+                      <option value="es">Español</option>
+                    </select>
+                  </label> : null}
+                  {appearance}
+                </div>
               </>
             ) : null}
             {section === "universe" && universe ? (
@@ -258,8 +283,8 @@ export function SettingsDialog({
                 <div className="settings-page-heading">
                   <BookOpen size={20} />
                   <div>
-                    <h3>Current universe</h3>
-                    <p>Identity and local folder controls.</p>
+                    <h3>{settingsText.universeTitle}</h3>
+                    <p>{settingsText.universeDescription}</p>
                   </div>
                 </div>
                 {universe}
@@ -270,25 +295,24 @@ export function SettingsDialog({
                 <div className="settings-page-heading">
                   <Settings2 size={20} />
                   <div>
-                    <h3>About Compendium</h3>
+                    <h3>{settingsText.aboutTitle}</h3>
                     <p>
-                      A readable, public-facing projection of your Everend
-                      universe.
+                      {settingsText.aboutDescription}
                     </p>
                   </div>
                 </div>
                 <dl>
                   <div>
-                    <dt>Version</dt>
+                    <dt>{settingsText.version}</dt>
                     <dd>0.2.0</dd>
                   </div>
                   <div>
-                    <dt>Canon safety</dt>
-                    <dd>Read-only; corrections are review proposals</dd>
+                    <dt>{settingsText.canonSafety}</dt>
+                    <dd>{settingsText.canonValue}</dd>
                   </div>
                 </dl>
                 <button type="button" onClick={onOpenDocs}>
-                  <ExternalLink size={14} /> Open documentation
+                  <ExternalLink size={14} /> {settingsText.documentation}
                 </button>
               </div>
             ) : null}
