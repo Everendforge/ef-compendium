@@ -612,7 +612,7 @@ function App({ suiteChrome }: { suiteChrome?: SuiteChrome } = {}) {
       };
       const result = await saveUniverseTextFile(
         site.vaultPath,
-        ".everend/compendium.yaml",
+        ".everend/.compendium/settings.json",
         serializeConfig(nextConfig),
       );
       if (!result.ok)
